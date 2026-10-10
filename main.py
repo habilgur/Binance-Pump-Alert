@@ -251,10 +251,11 @@ def filter_alerts_anti_spam(raw_alerts: list, state: dict) -> tuple[list, dict]:
                 print(f"[SPAM ENGELİ] {futures_symbol} daha önce %{last_percent:.1f} ile bildirilmişti (Şu an: %{percent:.1f}). Tekrar bildirilmedi.")
 
         if should_alert:
-            trade_link = f"https://www.binance.com/tr/futures/{futures_symbol}"
+            # app.binance.com mobilde doğrudan Binance uygulamasını tetikler
+            app_link = f"https://app.binance.com/tr/futures/{futures_symbol}"
             filtered_messages.append(
                 f"🚀 *{futures_symbol}*{status_note}: *+%{percent:.2f}*\n"
-                f"💵 Fiyat: `{price} USDT` | [Futures Aç]({trade_link})"
+                f"💵 Fiyat: `{price} USDT` | [📱 Binance'te Aç]({app_link})"
             )
 
     return filtered_messages, state
