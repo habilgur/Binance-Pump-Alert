@@ -1,6 +1,6 @@
 {
   "threshold": 35.0,
-  "last_update_id": 661940640,
+  "last_update_id": 661940641,
   "history": {
     "ERAUSDT": {
       "time": 1791621825.9743133,
@@ -16,6 +16,11 @@
       "time": 1791633170.6832662,
       "percent": 36.196,
       "price": "0.11100000"
+    },
+    "BATUSDT": {
+      "time": 1791633926.7815335,
+      "percent": 41.487,
+      "price": "0.15790000"
     }
   }
 }
