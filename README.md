@@ -1,6 +1,6 @@
 # 🚀 Binance Spike / Pump Alert Bot
 
-Bu proje, **Binance** piyasasındaki tüm vadeli ve spot USDT işlem çiftlerini 10 dakikada bir tarar, en çok yükselenleri (Z-A) sıralar ve belirlediğiniz eşiği aşan koinleri **Telegram Botu** aracılığıyla telefonunuza anlık bildirim olarak gönderir.
+Bu proje, **Binance** piyasasındaki tüm vadeli ve spot USDT işlem çiftlerini 5 dakikada bir tarar, en çok yükselenleri (Z-A) sıralar ve belirlediğiniz eşiği aşan koinleri **Telegram Botu** aracılığıyla telefonunuza anlık bildirim olarak gönderir.
 
 GitHub Actions ile sunucu (VPS) masrafı olmadan tamamen **ücretsiz ve kesintisiz** çalışır.
 

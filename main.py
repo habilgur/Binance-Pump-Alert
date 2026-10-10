@@ -146,7 +146,7 @@ def process_telegram_commands(state: dict) -> dict:
                 f"• Aktif Alarm Eşiği: *%{th:.1f}*\n"
                 f"• Takipteki (önceden bildirilmiş) Futures koinler: *{hist_count}*\n"
                 f"• Filtre: *Sadece Binance Futures (Vadeli İşlemler)*\n"
-                f"• Tarama Aralığı: *Her 10 dakikada bir*\n"
+                f"• Tarama Aralığı: *Her 5 dakikada bir*\n"
                 f"• Anti-Spam Koruması: *Aktif (4 saat cooldown / +%15 kademeli zirve)*\n\n"
                 f"Eşiği değiştirmek için: `/esik <yüzde>` (Örn: `/esik 75`)"
             )

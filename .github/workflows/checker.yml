@@ -2,8 +2,8 @@ name: Binance Futures Spike Alert
 
 on:
   schedule:
-    # Her 10 dakikada bir çalıştır (UTC)
-    - cron: '*/10 * * * *'
+    # Her 5 dakikada bir çalıştır (UTC)
+    - cron: '*/5 * * * *'
   workflow_dispatch: # GitHub arayüzünden elle tetiklemek için
 
 permissions:
