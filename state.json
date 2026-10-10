@@ -1,11 +1,21 @@
 {
-  "threshold": 50.0,
-  "last_update_id": 661940638,
+  "threshold": 35.0,
+  "last_update_id": 661940640,
   "history": {
     "ERAUSDT": {
       "time": 1791621825.9743133,
       "percent": 76.349,
       "price": "0.11110000"
+    },
+    "MAGICUSDT": {
+      "time": 1791633170.6832662,
+      "percent": 48.597,
+      "price": "0.11650000"
+    },
+    "LUMIAUSDT": {
+      "time": 1791633170.6832662,
+      "percent": 36.196,
+      "price": "0.11100000"
     }
   }
 }
