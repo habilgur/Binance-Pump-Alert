@@ -28,24 +28,41 @@ def send_telegram(message: str) -> bool:
         print(f"[HATA] Telegram mesajı gönderilemedi: {e}")
         return False
 
-def check_binance_futures():
-    print("[BİLGİ] Binance Futures 24s ticker verileri alınıyor...")
-    url = "https://fapi.binance.com/fapi/v1/ticker/24hr"
+def fetch_tickers():
+    # GitHub Actions sunucuları (ABD merkezli) Binance Futures (fapi) için 451 dönebilir.
+    # Bu nedenle önce Futures, bölgesel kısıt varsa Global Vision API denenir.
+    endpoints = [
+        ("Binance Futures", "https://fapi.binance.com/fapi/v1/ticker/24hr"),
+        ("Binance Global Data", "https://data-api.binance.vision/api/v3/ticker/24hr"),
+    ]
 
-    try:
-        response = requests.get(url, timeout=15)
-        response.raise_for_status()
-        tickers = response.json()
-    except Exception as e:
-        print(f"[HATA] Binance API'sine bağlanırken hata oluştu: {e}")
-        sys.exit(1)
+    for source_name, url in endpoints:
+        try:
+            print(f"[BİLGİ] {source_name} verileri alınıyor...")
+            response = requests.get(url, timeout=15)
+            if response.status_code == 451:
+                print(f"[UYARI] {source_name} bölgesel kısıt (HTTP 451) döndü. Alternatif uç noktaya geçiliyor...")
+                continue
+            response.raise_for_status()
+            data = response.json()
+            print(f"[BİLGİ] {source_name} üzerinden veriler başarıyla alındı.")
+            return source_name, data
+        except Exception as e:
+            print(f"[UYARI] {source_name} isteği başarısız oldu: {e}")
+            continue
+
+    print("[HATA] Hiçbir Binance veri kaynağına erişilemedi!")
+    sys.exit(1)
+
+def check_binance_spikes():
+    source_name, tickers = fetch_tickers()
 
     alerts = []
     total_usdt_pairs = 0
 
     for ticker in tickers:
         symbol = ticker.get("symbol", "")
-        # Sadece USDT vadeli işlem çiftlerini tara
+        # Sadece USDT çiftlerini tara
         if symbol.endswith("USDT"):
             total_usdt_pairs += 1
             try:
@@ -58,11 +75,11 @@ def check_binance_futures():
             except (ValueError, TypeError):
                 continue
 
-    print(f"[BİLGİ] Toplam {total_usdt_pairs} USDT çifti tarandı. Eşiği (>={THRESHOLD_PERCENT}%) geçen: {len(alerts)}")
+    print(f"[BİLGİ] Toplam {total_usdt_pairs} USDT çifti tarandı ({source_name}). Eşiği (>={THRESHOLD_PERCENT}%) geçen: {len(alerts)}")
 
     if alerts:
         msg = (
-            f"🔥 *Binance Futures Yüksek Performans Uyarısı (>=%{THRESHOLD_PERCENT:.1f})*\n\n"
+            f"🔥 *Binance Yüksek Performans Uyarısı (>=%{THRESHOLD_PERCENT:.1f})* [{source_name}]\n\n"
             + "\n\n".join(alerts)
         )
         send_telegram(msg)
@@ -70,4 +87,4 @@ def check_binance_futures():
         print(f"[BİLGİ] Eşiği geçen (>=%{THRESHOLD_PERCENT:.1f}) koin bulunamadı. Telegram mesajı gönderilmedi.")
 
 if __name__ == "__main__":
-    check_binance_futures()
+    check_binance_spikes()
