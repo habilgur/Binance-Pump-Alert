@@ -1,5 +1,16 @@
 {
   "threshold": 50.0,
   "last_update_id": 0,
-  "history": {}
+  "history": {
+    "ERAUSDT": {
+      "time": 1791621825.9743133,
+      "percent": 76.349,
+      "price": "0.11110000"
+    },
+    "CREAMUSDT": {
+      "time": 1791621825.9743133,
+      "percent": 65.354,
+      "price": "2.10000000"
+    }
+  }
 }
