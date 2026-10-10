@@ -7,6 +7,7 @@ import requests
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 STATE_FILE = "state.json"
+FUTURES_SYMBOLS_FILE = "futures_symbols.json"
 
 # Anti-Spam Yapılandırması
 COOLDOWN_SECONDS = 4 * 3600   # 4 saat (Aynı koin için 4 saat boyunca tekrar bildirim atılmaz)
@@ -22,7 +23,6 @@ def load_state() -> dict:
         try:
             with open(STATE_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                # Eksik alanlar varsa varsayılanla tamamla
                 for key, val in default_state.items():
                     if key not in data:
                         data[key] = val
@@ -38,6 +38,34 @@ def save_state(state: dict):
         print("[BİLGİ] Durum (state.json) başarıyla kaydedildi.")
     except Exception as e:
         print(f"[HATA] {STATE_FILE} kaydedilemedi: {e}")
+
+def load_futures_symbols() -> set:
+    """Yalnızca aktif Binance Vadeli İşlemler (Futures) paritelerini yükler/günceller."""
+    symbols = set()
+    if os.path.exists(FUTURES_SYMBOLS_FILE):
+        try:
+            with open(FUTURES_SYMBOLS_FILE, "r", encoding="utf-8") as f:
+                symbols = set(json.load(f))
+        except Exception:
+            pass
+
+    # Eğer API erişilebilir durumdaysa vadeli işlem paritelerini canlı güncelle
+    try:
+        res = requests.get("https://fapi.binance.com/fapi/v1/exchangeInfo", timeout=5)
+        if res.status_code == 200:
+            api_symbols = [
+                s["symbol"] for s in res.json().get("symbols", [])
+                if s.get("contractType") == "PERPETUAL" and s.get("status") == "TRADING"
+            ]
+            if api_symbols:
+                symbols = set(api_symbols)
+                with open(FUTURES_SYMBOLS_FILE, "w", encoding="utf-8") as f:
+                    json.dump(sorted(api_symbols), f, indent=2)
+                print(f"[BİLGİ] Vadeli işlemler parite listesi güncellendi ({len(symbols)} adet).")
+    except Exception:
+        pass
+
+    return symbols
 
 def send_telegram(message: str) -> bool:
     if not TELEGRAM_TOKEN or not CHAT_ID:
@@ -104,7 +132,7 @@ def process_telegram_commands(state: dict) -> dict:
                     val_str = parts[1].replace("%", "").replace(",", ".")
                     new_val = float(val_str)
                     state["threshold"] = new_val
-                    send_telegram(f"✅ *Alarm Eşiği Güncellendi!*\n\nYeni Eşik: *%{new_val:.1f}*\nArtık 24 saatlik artışı bu oranın üzerinde olan koinler bildirilecek.")
+                    send_telegram(f"✅ *Futures Alarm Eşiği Güncellendi!*\n\nYeni Eşik: *%{new_val:.1f}*\nArtık Futures 24s artışı bu oranın üzerinde olan koinler bildirilecek.")
                 except ValueError:
                     send_telegram("❌ Geçersiz sayı formatı. Örnek kullanım: `/esik 60` veya `/esik 100`")
             else:
@@ -114,9 +142,10 @@ def process_telegram_commands(state: dict) -> dict:
             th = state.get("threshold", 50.0)
             hist_count = len(state.get("history", {}))
             send_telegram(
-                f"📊 *Bot Durumu:*\n\n"
+                f"📊 *Binance Futures Bot Durumu:*\n\n"
                 f"• Aktif Alarm Eşiği: *%{th:.1f}*\n"
-                f"• Takipteki (önceden bildirilmiş) koinler: *{hist_count}*\n"
+                f"• Takipteki (önceden bildirilmiş) Futures koinler: *{hist_count}*\n"
+                f"• Filtre: *Sadece Binance Futures (Vadeli İşlemler)*\n"
                 f"• Tarama Aralığı: *Her 10 dakikada bir*\n"
                 f"• Anti-Spam Koruması: *Aktif (4 saat cooldown / +%15 kademeli zirve)*\n\n"
                 f"Eşiği değiştirmek için: `/esik <yüzde>` (Örn: `/esik 75`)"
@@ -125,7 +154,7 @@ def process_telegram_commands(state: dict) -> dict:
         elif text_lower in ["/yardim", "/help", "/start"]:
             th = state.get("threshold", 50.0)
             send_telegram(
-                f"🤖 *Binance Spike Alert Botu*\n\n"
+                f"🤖 *Binance Futures Spike Alert Botu*\n\n"
                 f"Kullanabileceğiniz komutlar:\n"
                 f"• `/esik 80` : Alarm eşiğini %80 yapar\n"
                 f"• `/durum` : Mevcut ayarları ve bot durumunu gösterir\n"
@@ -138,7 +167,7 @@ def process_telegram_commands(state: dict) -> dict:
             try:
                 new_val = float(text.replace("%", "").replace(",", "."))
                 state["threshold"] = new_val
-                send_telegram(f"✅ *Alarm Eşiği Güncellendi!*\nYeni Eşik: *%{new_val:.1f}*")
+                send_telegram(f"✅ *Futures Alarm Eşiği Güncellendi!*\nYeni Eşik: *%{new_val:.1f}*")
             except ValueError:
                 pass
 
@@ -168,6 +197,15 @@ def fetch_tickers():
     print("[HATA] Hiçbir Binance veri kaynağına erişilemedi!")
     sys.exit(1)
 
+def match_futures_symbol(symbol: str, futures_set: set) -> str | None:
+    """Spot sembolünü Futures paritesi ile eşleştirir (örn: 1000PEPEUSDT vb.)."""
+    if symbol in futures_set:
+        return symbol
+    thousand_sym = "1000" + symbol
+    if thousand_sym in futures_set:
+        return thousand_sym
+    return None
+
 def filter_alerts_anti_spam(raw_alerts: list, state: dict) -> tuple[list, dict]:
     history = state.get("history", {})
     now = time.time()
@@ -181,18 +219,18 @@ def filter_alerts_anti_spam(raw_alerts: list, state: dict) -> tuple[list, dict]:
     state["history"] = history
 
     for item in raw_alerts:
-        symbol = item["symbol"]
+        futures_symbol = item["futures_symbol"]
         percent = item["percent"]
         price = item["price"]
 
-        last_record = history.get(symbol)
+        last_record = history.get(futures_symbol)
         should_alert = False
         status_note = ""
 
         if not last_record:
             # 1. Durum: Koin ilk kez eşiği aşıyor
             should_alert = True
-            history[symbol] = {"time": now, "percent": percent, "price": price}
+            history[futures_symbol] = {"time": now, "percent": percent, "price": price}
         else:
             time_since_last = now - last_record.get("time", 0)
             last_percent = last_record.get("percent", 0.0)
@@ -201,23 +239,22 @@ def filter_alerts_anti_spam(raw_alerts: list, state: dict) -> tuple[list, dict]:
                 # 2. Durum: 4 saatlik cooldown süresi dolmuş, koin hala yüksek
                 should_alert = True
                 status_note = " *(🔄 Devam Ediyor)*"
-                history[symbol] = {"time": now, "percent": percent, "price": price}
+                history[futures_symbol] = {"time": now, "percent": percent, "price": price}
             elif percent >= (last_percent + STEP_UP_PERCENT):
                 # 3. Durum: 4 saat dolmamış ama koin +%15 daha fırlamış (Yeni Zirve!)
                 should_alert = True
                 diff = percent - last_percent
                 status_note = f" *(🔥 Zirve Tazeledi: +%{diff:.1f} daha arttı)*"
-                history[symbol] = {"time": now, "percent": percent, "price": price}
+                history[futures_symbol] = {"time": now, "percent": percent, "price": price}
             else:
                 # 4. Durum: Kısa süre önce bildirilmiş, yeni ek yükseliş yok -> SPAM'I ENGELLE
-                print(f"[SPAM ENGELİ] {symbol} daha önce %{last_percent:.1f} ile bildirilmişti (Şu an: %{percent:.1f}). Tekrar bildirilmedi.")
+                print(f"[SPAM ENGELİ] {futures_symbol} daha önce %{last_percent:.1f} ile bildirilmişti (Şu an: %{percent:.1f}). Tekrar bildirilmedi.")
 
         if should_alert:
-            clean_symbol = symbol.replace("USDT", "_USDT")
-            trade_link = f"https://www.binance.com/tr/trade/{clean_symbol}"
+            trade_link = f"https://www.binance.com/tr/futures/{futures_symbol}"
             filtered_messages.append(
-                f"🚀 *{symbol}*{status_note}: *+%{percent:.2f}*\n"
-                f"💵 Fiyat: `{price} USDT` | [Grafik / Al-Sat]({trade_link})"
+                f"🚀 *{futures_symbol}*{status_note}: *+%{percent:.2f}*\n"
+                f"💵 Fiyat: `{price} USDT` | [Futures Aç]({trade_link})"
             )
 
     return filtered_messages, state
@@ -226,28 +263,42 @@ def check_binance_spikes():
     # 1. Mevcut durumu yükle
     state = load_state()
 
-    # 2. Telegram'dan gelen komutları kontrol et (/esik 80 vb.)
+    # 2. Aktif Binance Futures parite listesini al (Sadece Vadeli İşlemlerde Olanlar)
+    futures_symbols = load_futures_symbols()
+    print(f"[BİLGİ] Takip edilen aktif Binance Futures parite sayısı: {len(futures_symbols)}")
+
+    # 3. Telegram'dan gelen komutları kontrol et (/esik 80 vb.)
     state = process_telegram_commands(state)
     active_threshold = state.get("threshold", 50.0)
-    print(f"[BİLGİ] Aktif alarm eşiği: %{active_threshold:.1f}")
+    print(f"[BİLGİ] Aktif Futures alarm eşiği: %{active_threshold:.1f}")
 
-    # 3. Binance piyasa verilerini çek
+    # 4. Binance piyasa verilerini çek
     source_name, tickers = fetch_tickers()
 
     raw_candidates = []
     total_usdt_pairs = 0
+    futures_matched = 0
 
     for ticker in tickers:
         symbol = ticker.get("symbol", "")
         if symbol.endswith("USDT"):
             total_usdt_pairs += 1
+
+            # KRİTİK: Sadece Binance Futures (Vadeli İşlemler) listesinde olanları dahil et!
+            # Spotta olup vadeli işlemlerde olmayan koinler (örn: CREAM) burada elenir.
+            futures_symbol = match_futures_symbol(symbol, futures_symbols)
+            if not futures_symbol:
+                continue
+
+            futures_matched += 1
+
             try:
                 price_change_percent = float(ticker.get("priceChangePercent", 0.0))
                 last_price = ticker.get("lastPrice", "0")
 
                 if price_change_percent >= active_threshold:
                     raw_candidates.append({
-                        "symbol": symbol,
+                        "futures_symbol": futures_symbol,
                         "percent": price_change_percent,
                         "price": last_price,
                     })
@@ -257,23 +308,23 @@ def check_binance_spikes():
     # Değişime göre Z-A (en çok artandan az artana) sırala
     raw_candidates.sort(key=lambda x: x["percent"], reverse=True)
 
-    print(f"[BİLGİ] Toplam {total_usdt_pairs} USDT çifti tarandı ({source_name}). Eşiği (>={active_threshold}%) aşan: {len(raw_candidates)}")
+    print(f"[BİLGİ] Toplam {futures_matched} adet Futures USDT çifti tarandı. Eşiği (>={active_threshold}%) aşan: {len(raw_candidates)}")
 
-    # 4. Anti-Spam filtresinden geçir
+    # 5. Anti-Spam filtresinden geçir
     alerts, state = filter_alerts_anti_spam(raw_candidates, state)
 
-    # 5. Yeni bildirim varsa gönder
+    # 6. Yeni bildirim varsa gönder
     if alerts:
         msg = (
-            f"🔥 *Binance Yüksek Performans Uyarısı (>=%{active_threshold:.1f})* [{source_name}]\n\n"
+            f"🔥 *Binance Futures Yüksek Performans Uyarısı (>=%{active_threshold:.1f})*\n\n"
             + "\n\n".join(alerts)
         )
         send_telegram(msg)
-        print(f"[BİLGİ] {len(alerts)} adet filtrelenmiş bildirim Telegram'a gönderildi.")
+        print(f"[BİLGİ] {len(alerts)} adet filtrelenmiş Futures bildirimi Telegram'a gönderildi.")
     else:
-        print("[BİLGİ] Gönderilecek yeni/spam olmayan bildirim bulunamadı.")
+        print("[BİLGİ] Gönderilecek yeni/spam olmayan Futures bildirimi bulunamadı.")
 
-    # 6. Güncellenmiş durumu kaydet
+    # 7. Güncellenmiş durumu kaydet
     save_state(state)
 
 if __name__ == "__main__":
