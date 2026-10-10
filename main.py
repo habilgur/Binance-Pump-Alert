@@ -1,14 +1,47 @@
 import os
 import sys
+import json
+import time
 import requests
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
-THRESHOLD_PERCENT = float(os.getenv("THRESHOLD_PERCENT", "50.0"))
+STATE_FILE = "state.json"
+
+# Anti-Spam Yapılandırması
+COOLDOWN_SECONDS = 4 * 3600   # 4 saat (Aynı koin için 4 saat boyunca tekrar bildirim atılmaz)
+STEP_UP_PERCENT = 15.0        # 4 saat dolmasa bile koin +%15 daha fazla yükselirse "Yeni Zirve" bildirimi atılır
+
+def load_state() -> dict:
+    default_state = {
+        "threshold": float(os.getenv("THRESHOLD_PERCENT", "50.0") or "50.0"),
+        "last_update_id": 0,
+        "history": {}
+    }
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                # Eksik alanlar varsa varsayılanla tamamla
+                for key, val in default_state.items():
+                    if key not in data:
+                        data[key] = val
+                return data
+        except Exception as e:
+            print(f"[UYARI] {STATE_FILE} okunamadı ({e}), varsayılan durum kullanılıyor.")
+    return default_state
+
+def save_state(state: dict):
+    try:
+        with open(STATE_FILE, "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=2, ensure_ascii=False)
+        print("[BİLGİ] Durum (state.json) başarıyla kaydedildi.")
+    except Exception as e:
+        print(f"[HATA] {STATE_FILE} kaydedilemedi: {e}")
 
 def send_telegram(message: str) -> bool:
     if not TELEGRAM_TOKEN or not CHAT_ID:
-        print("[UYARI] TELEGRAM_TOKEN veya CHAT_ID ortam değişkeni tanımlanmamış!")
+        print("[UYARI] TELEGRAM_TOKEN veya CHAT_ID tanımlı değil!")
         return False
 
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
@@ -22,15 +55,96 @@ def send_telegram(message: str) -> bool:
     try:
         response = requests.post(url, json=payload, timeout=15)
         response.raise_for_status()
-        print("[BİLGİ] Telegram mesajı başarıyla iletildi.")
+        print("[BİLGİ] Telegram bildirimi iletildi.")
         return True
     except Exception as e:
         print(f"[HATA] Telegram mesajı gönderilemedi: {e}")
         return False
 
+def process_telegram_commands(state: dict) -> dict:
+    if not TELEGRAM_TOKEN or not CHAT_ID:
+        return state
+
+    last_update_id = state.get("last_update_id", 0)
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/getUpdates"
+    params = {"offset": last_update_id + 1, "timeout": 5}
+
+    try:
+        res = requests.get(url, params=params, timeout=10)
+        res.raise_for_status()
+        updates = res.json().get("result", [])
+    except Exception as e:
+        print(f"[UYARI] Telegram komutları alınamadı: {e}")
+        return state
+
+    for update in updates:
+        update_id = update.get("update_id", 0)
+        if update_id > state.get("last_update_id", 0):
+            state["last_update_id"] = update_id
+
+        message = update.get("message", {})
+        sender_chat_id = str(message.get("chat", {}).get("id", ""))
+        text = message.get("text", "").strip()
+
+        # Güvenlik Kontrolü: Yalnızca yetkili Chat ID'den gelen komutları işle
+        if sender_chat_id != str(CHAT_ID):
+            continue
+
+        if not text:
+            continue
+
+        text_lower = text.lower()
+        print(f"[BİLGİ] Telegram'dan yeni mesaj alındı: {text}")
+
+        # Eşik değiştirme komutları: /esik 70, /threshold 80, /set 60
+        if text_lower.startswith(("/esik", "/threshold", "/set")):
+            parts = text.split()
+            if len(parts) >= 2:
+                try:
+                    val_str = parts[1].replace("%", "").replace(",", ".")
+                    new_val = float(val_str)
+                    state["threshold"] = new_val
+                    send_telegram(f"✅ *Alarm Eşiği Güncellendi!*\n\nYeni Eşik: *%{new_val:.1f}*\nArtık 24 saatlik artışı bu oranın üzerinde olan koinler bildirilecek.")
+                except ValueError:
+                    send_telegram("❌ Geçersiz sayı formatı. Örnek kullanım: `/esik 60` veya `/esik 100`")
+            else:
+                send_telegram(f"ℹ️ Mevcut alarm eşiği: *%{state.get('threshold', 50.0):.1f}*\nDeğiştirmek için: `/esik 80` yazabilirsiniz.")
+
+        elif text_lower in ["/durum", "/status"]:
+            th = state.get("threshold", 50.0)
+            hist_count = len(state.get("history", {}))
+            send_telegram(
+                f"📊 *Bot Durumu:*\n\n"
+                f"• Aktif Alarm Eşiği: *%{th:.1f}*\n"
+                f"• Takipteki (önceden bildirilmiş) koinler: *{hist_count}*\n"
+                f"• Tarama Aralığı: *Her 10 dakikada bir*\n"
+                f"• Anti-Spam Koruması: *Aktif (4 saat cooldown / +%15 kademeli zirve)*\n\n"
+                f"Eşiği değiştirmek için: `/esik <yüzde>` (Örn: `/esik 75`)"
+            )
+
+        elif text_lower in ["/yardim", "/help", "/start"]:
+            th = state.get("threshold", 50.0)
+            send_telegram(
+                f"🤖 *Binance Spike Alert Botu*\n\n"
+                f"Kullanabileceğiniz komutlar:\n"
+                f"• `/esik 80` : Alarm eşiğini %80 yapar\n"
+                f"• `/durum` : Mevcut ayarları ve bot durumunu gösterir\n"
+                f"• `/yardim` : Bu mesajı gösterir\n\n"
+                f"Mevcut Eşik: *%{th:.1f}*"
+            )
+
+        # Kullanıcı komutsuz doğrudan sayı yazdıysa (örn: "80" veya "%80")
+        elif text.replace("%", "").replace(",", ".").replace(".", "", 1).isdigit():
+            try:
+                new_val = float(text.replace("%", "").replace(",", "."))
+                state["threshold"] = new_val
+                send_telegram(f"✅ *Alarm Eşiği Güncellendi!*\nYeni Eşik: *%{new_val:.1f}*")
+            except ValueError:
+                pass
+
+    return state
+
 def fetch_tickers():
-    # GitHub Actions sunucuları (ABD merkezli) Binance Futures (fapi) için 451 dönebilir.
-    # Bu nedenle önce Futures, bölgesel kısıt varsa Global Vision API denenir.
     endpoints = [
         ("Binance Futures", "https://fapi.binance.com/fapi/v1/ticker/24hr"),
         ("Binance Global Data", "https://data-api.binance.vision/api/v3/ticker/24hr"),
@@ -54,37 +168,113 @@ def fetch_tickers():
     print("[HATA] Hiçbir Binance veri kaynağına erişilemedi!")
     sys.exit(1)
 
+def filter_alerts_anti_spam(raw_alerts: list, state: dict) -> tuple[list, dict]:
+    history = state.get("history", {})
+    now = time.time()
+    filtered_messages = []
+
+    # 24 saatten eski kayıtları temizle
+    history = {
+        sym: data for sym, data in history.items()
+        if (now - data.get("time", 0)) < 24 * 3600
+    }
+    state["history"] = history
+
+    for item in raw_alerts:
+        symbol = item["symbol"]
+        percent = item["percent"]
+        price = item["price"]
+
+        last_record = history.get(symbol)
+        should_alert = False
+        status_note = ""
+
+        if not last_record:
+            # 1. Durum: Koin ilk kez eşiği aşıyor
+            should_alert = True
+            history[symbol] = {"time": now, "percent": percent, "price": price}
+        else:
+            time_since_last = now - last_record.get("time", 0)
+            last_percent = last_record.get("percent", 0.0)
+
+            if time_since_last >= COOLDOWN_SECONDS:
+                # 2. Durum: 4 saatlik cooldown süresi dolmuş, koin hala yüksek
+                should_alert = True
+                status_note = " *(🔄 Devam Ediyor)*"
+                history[symbol] = {"time": now, "percent": percent, "price": price}
+            elif percent >= (last_percent + STEP_UP_PERCENT):
+                # 3. Durum: 4 saat dolmamış ama koin +%15 daha fırlamış (Yeni Zirve!)
+                should_alert = True
+                diff = percent - last_percent
+                status_note = f" *(🔥 Zirve Tazeledi: +%{diff:.1f} daha arttı)*"
+                history[symbol] = {"time": now, "percent": percent, "price": price}
+            else:
+                # 4. Durum: Kısa süre önce bildirilmiş, yeni ek yükseliş yok -> SPAM'I ENGELLE
+                print(f"[SPAM ENGELİ] {symbol} daha önce %{last_percent:.1f} ile bildirilmişti (Şu an: %{percent:.1f}). Tekrar bildirilmedi.")
+
+        if should_alert:
+            clean_symbol = symbol.replace("USDT", "_USDT")
+            trade_link = f"https://www.binance.com/tr/trade/{clean_symbol}"
+            filtered_messages.append(
+                f"🚀 *{symbol}*{status_note}: *+%{percent:.2f}*\n"
+                f"💵 Fiyat: `{price} USDT` | [Grafik / Al-Sat]({trade_link})"
+            )
+
+    return filtered_messages, state
+
 def check_binance_spikes():
+    # 1. Mevcut durumu yükle
+    state = load_state()
+
+    # 2. Telegram'dan gelen komutları kontrol et (/esik 80 vb.)
+    state = process_telegram_commands(state)
+    active_threshold = state.get("threshold", 50.0)
+    print(f"[BİLGİ] Aktif alarm eşiği: %{active_threshold:.1f}")
+
+    # 3. Binance piyasa verilerini çek
     source_name, tickers = fetch_tickers()
 
-    alerts = []
+    raw_candidates = []
     total_usdt_pairs = 0
 
     for ticker in tickers:
         symbol = ticker.get("symbol", "")
-        # Sadece USDT çiftlerini tara
         if symbol.endswith("USDT"):
             total_usdt_pairs += 1
             try:
                 price_change_percent = float(ticker.get("priceChangePercent", 0.0))
                 last_price = ticker.get("lastPrice", "0")
 
-                # Eşiği geçen koinleri topla
-                if price_change_percent >= THRESHOLD_PERCENT:
-                    alerts.append(f"🚀 *{symbol}*: +%{price_change_percent:.2f}\n💵 Fiyat: `{last_price} USDT`")
+                if price_change_percent >= active_threshold:
+                    raw_candidates.append({
+                        "symbol": symbol,
+                        "percent": price_change_percent,
+                        "price": last_price,
+                    })
             except (ValueError, TypeError):
                 continue
 
-    print(f"[BİLGİ] Toplam {total_usdt_pairs} USDT çifti tarandı ({source_name}). Eşiği (>={THRESHOLD_PERCENT}%) geçen: {len(alerts)}")
+    # Değişime göre Z-A (en çok artandan az artana) sırala
+    raw_candidates.sort(key=lambda x: x["percent"], reverse=True)
 
+    print(f"[BİLGİ] Toplam {total_usdt_pairs} USDT çifti tarandı ({source_name}). Eşiği (>={active_threshold}%) aşan: {len(raw_candidates)}")
+
+    # 4. Anti-Spam filtresinden geçir
+    alerts, state = filter_alerts_anti_spam(raw_candidates, state)
+
+    # 5. Yeni bildirim varsa gönder
     if alerts:
         msg = (
-            f"🔥 *Binance Yüksek Performans Uyarısı (>=%{THRESHOLD_PERCENT:.1f})* [{source_name}]\n\n"
+            f"🔥 *Binance Yüksek Performans Uyarısı (>=%{active_threshold:.1f})* [{source_name}]\n\n"
             + "\n\n".join(alerts)
         )
         send_telegram(msg)
+        print(f"[BİLGİ] {len(alerts)} adet filtrelenmiş bildirim Telegram'a gönderildi.")
     else:
-        print(f"[BİLGİ] Eşiği geçen (>=%{THRESHOLD_PERCENT:.1f}) koin bulunamadı. Telegram mesajı gönderilmedi.")
+        print("[BİLGİ] Gönderilecek yeni/spam olmayan bildirim bulunamadı.")
+
+    # 6. Güncellenmiş durumu kaydet
+    save_state(state)
 
 if __name__ == "__main__":
     check_binance_spikes()
