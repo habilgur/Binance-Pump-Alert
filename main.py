@@ -256,6 +256,27 @@ def fetch_funding_map() -> dict:
 
     return funding_map
 
+def format_volume(vol_float: float) -> str:
+    """Hacmi K, M, B formatında okunabilir hale getirir."""
+    if vol_float >= 1_000_000_000:
+        return f"{vol_float / 1_000_000_000:.1f}B$"
+    elif vol_float >= 1_000_000:
+        return f"{vol_float / 1_000_000:.1f}M$"
+    elif vol_float >= 1_000:
+        return f"{vol_float / 1_000:.1f}K$"
+    return f"{vol_float:.0f}$"
+
+def get_short_signal(ret_pct: float, rate_pct: float | None, interval_hours: int | None) -> str:
+    """Short pozisyon potansiyeli ve risk durumunu belirler."""
+    # 1. Aşırı negatif fonlama kontrolü (Short Squeeze riski)
+    if rate_pct is not None and interval_hours is not None:
+        if (interval_hours <= 4 and rate_pct <= -0.75) or rate_pct <= -1.0:
+            return "🚨 SQUEEZE RİSKİ"
+    # 2. Zirveden çekilme eşiği (en az %1.5)
+    if ret_pct >= 1.5:
+        return "✅ DÜZELTME"
+    return "⚠️ HALA TEPEDE"
+
 def filter_alerts_anti_spam(raw_alerts: list, state: dict) -> tuple[list, dict]:
     history = state.get("history", {})
     now = time.time()
@@ -272,7 +293,6 @@ def filter_alerts_anti_spam(raw_alerts: list, state: dict) -> tuple[list, dict]:
         futures_symbol = item["futures_symbol"]
         percent = item["percent"]
         price = item["price"]
-        funding_str = item.get("funding_str", "")
 
         last_record = history.get(futures_symbol)
         should_alert = False
@@ -302,13 +322,24 @@ def filter_alerts_anti_spam(raw_alerts: list, state: dict) -> tuple[list, dict]:
                 print(f"[SPAM ENGELİ] {futures_symbol} daha önce %{last_percent:.1f} ile bildirilmişti (Şu an: %{percent:.1f}). Tekrar bildirilmedi.")
 
         if should_alert:
-            alert_text = (
-                f"🚀 *{futures_symbol}*{status_note}: *+%{percent:.2f}*\n"
-                f"💵 Fiyat: `{price} USDT`"
-            )
+            signal = item.get("signal", "✅ DÜZELTME")
+            high_price = item.get("high_price", price)
+            ret_pct = item.get("ret_pct", 0.0)
+            vol_str = item.get("vol_str", "")
+            funding_str = item.get("funding_str", "")
+
+            # Seçenek B: Ultra-Minimalist Dashboard Formatı
+            line1 = f"🚀 *{futures_symbol}* (+%{percent:.1f}){status_note} — *{signal}*"
+            line2 = f"• Fiyat: `{price}$` (Zirve: `{high_price}$`)"
+
+            detail_parts = [f"Ret: `-%{ret_pct:.1f}`"]
+            if vol_str:
+                detail_parts.append(f"Hacim: `{vol_str}`")
             if funding_str:
-                alert_text += f"\n⏳ Funding: `{funding_str}`"
-            filtered_messages.append(alert_text)
+                detail_parts.append(f"Fonlama: `{funding_str}`")
+            line3 = f"• {' | '.join(detail_parts)}"
+
+            filtered_messages.append(f"{line1}\n{line2}\n{line3}")
 
     return filtered_messages, state
 
@@ -348,12 +379,24 @@ def check_binance_spikes():
             try:
                 price_change_percent = float(ticker.get("priceChangePercent", 0.0))
                 last_price = ticker.get("lastPrice", "0")
+                high_price = ticker.get("highPrice", last_price)
+                quote_volume = float(ticker.get("quoteVolume", 0.0))
+
+                last_p = float(last_price)
+                high_p = float(high_price)
+                if high_p > 0 and high_p >= last_p:
+                    ret_pct = ((high_p - last_p) / high_p) * 100.0
+                else:
+                    ret_pct = 0.0
 
                 if price_change_percent >= active_threshold:
                     raw_candidates.append({
                         "futures_symbol": futures_symbol,
                         "percent": price_change_percent,
                         "price": last_price,
+                        "high_price": high_price,
+                        "ret_pct": ret_pct,
+                        "vol_str": format_volume(quote_volume),
                     })
             except (ValueError, TypeError):
                 continue
@@ -363,18 +406,23 @@ def check_binance_spikes():
 
     print(f"[BİLGİ] Toplam {futures_matched} adet Futures USDT çifti tarandı. Eşiği (>={active_threshold}%) aşan: {len(raw_candidates)}")
 
-    # 5. Aday koinler varsa fonlama (funding) oran ve periyot verilerini çek
+    # 5. Aday koinler varsa fonlama (funding) oranlarını ve Short sinyallerini hesapla
     if raw_candidates:
-        print(f"[BİLGİ] {len(raw_candidates)} adet aday için fonlama (funding) bilgileri alınıyor...")
+        print(f"[BİLGİ] {len(raw_candidates)} adet aday için fonlama (funding) ve sinyal bilgileri alınıyor...")
         funding_map = fetch_funding_map()
         for cand in raw_candidates:
             sym = cand["futures_symbol"]
             f_info = funding_map.get(sym)
+            rate_pct = None
+            interval_hours = None
             if f_info:
-                cand["funding_str"] = format_funding_info(
-                    f_info["rate_percent"],
-                    f_info["interval_hours"]
-                )
+                rate_pct = f_info["rate_percent"]
+                interval_hours = f_info["interval_hours"]
+                cand["funding_str"] = format_funding_info(rate_pct, interval_hours)
+            else:
+                cand["funding_str"] = ""
+
+            cand["signal"] = get_short_signal(cand["ret_pct"], rate_pct, interval_hours)
 
     # 6. Anti-Spam filtresinden geçir
     alerts, state = filter_alerts_anti_spam(raw_candidates, state)

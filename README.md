@@ -23,9 +23,13 @@ GitHub Actions ve `cron-job.org` entegrasyonu sayesinde herhangi bir sunucu (VPS
    * Yalnızca vadeli işlemlerde aktif olan kontratları (`futures_symbols.json`) filtreler, spot-only koinleri eler.
    * Sade, temiz ve hızlı okunabilir metin formatında bildirim gönderir.
 
-4. **⏳ Anlık Fonlama Oranı & Periyodu (Funding Rate):**
-   * Her aday koinin anlık fonlama oranını ve kaç saatte bir fonlama alındığını bildirir.
-   * Format: `⏳ Funding: %-2.2 1(h)` veya `⏳ Funding: %+0.01 8(h)` şeklinde tek bakışta anlaşılır.
+4. **🎯 Short Fırsat Analizi & Dashboard Bildirimleri:**
+   * Hiçbir parite elenmeden tüm adaylar bildirilir; ancak anında karar verebilmeniz için analiz parametreleri eklenir:
+     - **Zirveden Ret (Pullback):** Günün en yüksek fiyatından ne kadar çekildiği (en az %1.5 çekilme `✅ DÜZELTME` kabul edilir).
+     - **24s Vadeli Hacim:** Likidite derinliği (`92M$`, `1.2B$` vb.).
+     - **Fonlama (Funding):** Anlık fonlama oranı ve saat aralığı (`%-2.2 1(h)` vb.).
+     - **Sinyal:** `✅ DÜZELTME`, `⚠️ HALA TEPEDE`, `🚨 SQUEEZE RİSKİ`.
+   * Mobil bildirimlerde 1 saniyede okunabilecek ultra-clean dashboard formatı kullanılır.
 
 5. **⚡ Kesintisiz Çalışma (Bölgesel Kısıt / Fallback Koruması):**
    * GitHub Actions bulut sunucularındaki olası bölgesel kısıtlamalara (HTTP 451) karşı Binance Futures ve Global Data kaynaklarını akıllı şekilde yönetir.
