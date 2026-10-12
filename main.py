@@ -256,6 +256,19 @@ def fetch_funding_map() -> dict:
 
     return funding_map
 
+def format_price(price_val: str | float) -> str:
+    """Fiyatı Binance mobil arayüzündeki gibi temizler, gereksiz son sıfırları atar.
+    Örnekler:
+    '82432.14000000' -> '82432.14'
+    '84352.00000000' -> '84352'
+    '0.01420000'     -> '0.0142'
+    '0.00001230'     -> '0.0000123'
+    """
+    s = str(price_val).strip()
+    if "." in s:
+        s = s.rstrip("0").rstrip(".")
+    return s
+
 def format_volume(vol_float: float) -> str:
     """Hacmi K, M, B formatında okunabilir hale getirir."""
     if vol_float >= 1_000_000_000:
@@ -328,9 +341,12 @@ def filter_alerts_anti_spam(raw_alerts: list, state: dict) -> tuple[list, dict]:
             vol_str = item.get("vol_str", "")
             funding_str = item.get("funding_str", "")
 
+            clean_price = format_price(price)
+            clean_high = format_price(high_price)
+
             # Seçenek B: Ultra-Minimalist Dashboard Formatı
             line1 = f"🚀 *{futures_symbol}* (+%{percent:.1f}){status_note} — *{signal}*"
-            line2 = f"• Fiyat: `{price}$` (Zirve: `{high_price}$`)"
+            line2 = f"• Fiyat: `{clean_price}$` (Zirve: `{clean_high}$`)"
 
             detail_parts = [f"Ret: `-%{ret_pct:.1f}`"]
             if vol_str:
