@@ -146,6 +146,7 @@ def process_telegram_commands(state: dict) -> dict:
                 f"• Aktif Alarm Eşiği: *%{th:.1f}*\n"
                 f"• Takipteki (önceden bildirilmiş) Futures koinler: *{hist_count}*\n"
                 f"• Filtre: *Sadece Binance Futures (Vadeli İşlemler)*\n"
+                f"• Fonlama (Funding): *Oran ve Aralık [Örn: %-2.2 1(h)]*\n"
                 f"• Tarama Aralığı: *Her 5 dakikada bir*\n"
                 f"• Anti-Spam Koruması: *Aktif (4 saat cooldown / +%15 kademeli zirve)*\n\n"
                 f"Eşiği değiştirmek için: `/esik <yüzde>` (Örn: `/esik 75`)"
@@ -206,6 +207,55 @@ def match_futures_symbol(symbol: str, futures_set: set) -> str | None:
         return thousand_sym
     return None
 
+def format_funding_info(rate_percent: float, interval_hours: int) -> str:
+    """Fonlama oranı ve saat aralığını formatlar. Örnek: %-2.2 1(h) veya %+0.01 8(h)"""
+    sign = "+" if rate_percent > 0 else ""
+    formatted = f"{rate_percent:.4f}".rstrip("0").rstrip(".")
+    if not formatted or formatted == "-0":
+        formatted = "0.0"
+    return f"%{sign}{formatted} {interval_hours}(h)"
+
+def fetch_funding_map() -> dict:
+    """Binance Futures üzerinden paritelerin fonlama oranı ve fonlama aralığını (saat) çeker."""
+    funding_map = {}
+    intervals = {}
+
+    # 1. Paritelerin fonlama aralığı (kaç saatte bir)
+    try:
+        res = requests.get("https://fapi.binance.com/fapi/v1/fundingInfo", timeout=10)
+        if res.status_code == 200:
+            for item in res.json():
+                sym = item.get("symbol")
+                hours = item.get("fundingIntervalHours")
+                if sym and hours is not None:
+                    intervals[sym] = hours
+    except Exception as e:
+        print(f"[UYARI] fundingInfo alınamadı: {e}")
+
+    # 2. Paritelerin anlık fonlama oranı (lastFundingRate)
+    try:
+        res = requests.get("https://fapi.binance.com/fapi/v1/premiumIndex", timeout=10)
+        if res.status_code == 200:
+            data = res.json()
+            if isinstance(data, list):
+                for item in data:
+                    sym = item.get("symbol")
+                    rate_raw = item.get("lastFundingRate")
+                    if sym and rate_raw is not None:
+                        try:
+                            rate_pct = float(rate_raw) * 100.0
+                            hours = intervals.get(sym, 8)  # Varsayılan Binance fonlama periyodu 8 saat
+                            funding_map[sym] = {
+                                "rate_percent": rate_pct,
+                                "interval_hours": hours
+                            }
+                        except (ValueError, TypeError):
+                            continue
+    except Exception as e:
+        print(f"[UYARI] premiumIndex alınamadı: {e}")
+
+    return funding_map
+
 def filter_alerts_anti_spam(raw_alerts: list, state: dict) -> tuple[list, dict]:
     history = state.get("history", {})
     now = time.time()
@@ -222,6 +272,7 @@ def filter_alerts_anti_spam(raw_alerts: list, state: dict) -> tuple[list, dict]:
         futures_symbol = item["futures_symbol"]
         percent = item["percent"]
         price = item["price"]
+        funding_str = item.get("funding_str", "")
 
         last_record = history.get(futures_symbol)
         should_alert = False
@@ -251,10 +302,13 @@ def filter_alerts_anti_spam(raw_alerts: list, state: dict) -> tuple[list, dict]:
                 print(f"[SPAM ENGELİ] {futures_symbol} daha önce %{last_percent:.1f} ile bildirilmişti (Şu an: %{percent:.1f}). Tekrar bildirilmedi.")
 
         if should_alert:
-            filtered_messages.append(
+            alert_text = (
                 f"🚀 *{futures_symbol}*{status_note}: *+%{percent:.2f}*\n"
                 f"💵 Fiyat: `{price} USDT`"
             )
+            if funding_str:
+                alert_text += f"\n⏳ Funding: `{funding_str}`"
+            filtered_messages.append(alert_text)
 
     return filtered_messages, state
 
@@ -309,10 +363,23 @@ def check_binance_spikes():
 
     print(f"[BİLGİ] Toplam {futures_matched} adet Futures USDT çifti tarandı. Eşiği (>={active_threshold}%) aşan: {len(raw_candidates)}")
 
-    # 5. Anti-Spam filtresinden geçir
+    # 5. Aday koinler varsa fonlama (funding) oran ve periyot verilerini çek
+    if raw_candidates:
+        print(f"[BİLGİ] {len(raw_candidates)} adet aday için fonlama (funding) bilgileri alınıyor...")
+        funding_map = fetch_funding_map()
+        for cand in raw_candidates:
+            sym = cand["futures_symbol"]
+            f_info = funding_map.get(sym)
+            if f_info:
+                cand["funding_str"] = format_funding_info(
+                    f_info["rate_percent"],
+                    f_info["interval_hours"]
+                )
+
+    # 6. Anti-Spam filtresinden geçir
     alerts, state = filter_alerts_anti_spam(raw_candidates, state)
 
-    # 6. Yeni bildirim varsa gönder
+    # 7. Yeni bildirim varsa gönder
     if alerts:
         msg = (
             f"🔥 *Binance Futures Yüksek Performans Uyarısı (>=%{active_threshold:.1f})*\n\n"
@@ -323,7 +390,7 @@ def check_binance_spikes():
     else:
         print("[BİLGİ] Gönderilecek yeni/spam olmayan Futures bildirimi bulunamadı.")
 
-    # 7. Güncellenmiş durumu kaydet
+    # 8. Güncellenmiş durumu kaydet
     save_state(state)
 
 if __name__ == "__main__":
