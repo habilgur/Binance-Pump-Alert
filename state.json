@@ -2,11 +2,6 @@
   "threshold": 45.0,
   "last_update_id": 661940642,
   "history": {
-    "LUMIAUSDT": {
-      "time": 1791712533.2199874,
-      "percent": 45.313,
-      "price": "0.16740000"
-    },
     "STRKUSDT": {
       "time": 1791731734.3401697,
       "percent": 36.544,
@@ -41,6 +36,11 @@
       "time": 1791797451.4656813,
       "percent": 47.622,
       "price": "0.00235900"
+    },
+    "GTCUSDT": {
+      "time": 1791799265.4047992,
+      "percent": 53.258,
+      "price": "0.28224000"
     }
   }
 }
