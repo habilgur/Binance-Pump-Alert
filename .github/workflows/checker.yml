@@ -23,7 +23,7 @@ jobs:
 
       - name: Çıkış IP Bölge Kontrolü
         run: |
-          curl -s https://www.cloudflare.com/cdn-cgi/trace | grep -E "ip|loc"
+          curl -s https://www.cloudflare.com/cdn-cgi/trace | tee last_trace.log
 
       - name: Python Kurulumu
         uses: actions/setup-python@v5
@@ -41,11 +41,12 @@ jobs:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
           THRESHOLD_PERCENT: ${{ secrets.THRESHOLD_PERCENT || '' }}
-        run: python main.py
+        run: |
+          python main.py 2>&1 | tee last_run.log
 
       - name: Bot Durumunu Kaydet (State Push)
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add state.json
+          git add state.json last_run.log last_trace.log
           git diff --staged --quiet || (git commit -m "chore: update alert history and settings [skip ci]" && git push)

@@ -182,14 +182,15 @@ def fetch_tickers():
 
     for source_name, url in endpoints:
         try:
-            print(f"[BİLGİ] {source_name} verileri alınıyor...")
+            print(f"[BİLGİ] {source_name} verileri alınıyor ({url})...")
             response = requests.get(url, timeout=15)
-            if response.status_code == 451:
-                print(f"[UYARI] {source_name} bölgesel kısıt (HTTP 451) döndü. Alternatif uç noktaya geçiliyor...")
+            print(f"[BİLGİ] {source_name} yanıt kodu: {response.status_code}")
+            if response.status_code != 200:
+                print(f"[UYARI] {source_name} başarısız (HTTP {response.status_code}): {response.text[:200]}")
                 continue
             response.raise_for_status()
             data = response.json()
-            print(f"[BİLGİ] {source_name} üzerinden veriler başarıyla alındı.")
+            print(f"[BİLGİ] {source_name} üzerinden {len(data)} veri başarıyla alındı.")
             return source_name, data
         except Exception as e:
             print(f"[UYARI] {source_name} isteği başarısız oldu: {e}")
@@ -379,6 +380,7 @@ def check_binance_spikes():
     total_usdt_pairs = 0
     futures_matched = 0
 
+    all_matched = []
     for ticker in tickers:
         symbol = ticker.get("symbol", "")
         if symbol.endswith("USDT"):
@@ -394,6 +396,7 @@ def check_binance_spikes():
 
             try:
                 price_change_percent = float(ticker.get("priceChangePercent", 0.0))
+                all_matched.append((futures_symbol, price_change_percent))
                 last_price = ticker.get("lastPrice", "0")
                 high_price = ticker.get("highPrice", last_price)
                 quote_volume = float(ticker.get("quoteVolume", 0.0))
@@ -420,7 +423,9 @@ def check_binance_spikes():
     # Değişime göre Z-A (en çok artandan az artana) sırala
     raw_candidates.sort(key=lambda x: x["percent"], reverse=True)
 
-    print(f"[BİLGİ] Toplam {futures_matched} adet Futures USDT çifti tarandı. Eşiği (>={active_threshold}%) aşan: {len(raw_candidates)}")
+    top_5 = sorted(all_matched, key=lambda x: x[1], reverse=True)[:5]
+    print(f"[BİLGİ] Toplam {futures_matched} adet Futures USDT çifti tarandı ({source_name}). En çok artan ilk 5: {top_5}")
+    print(f"[BİLGİ] Eşiği (>={active_threshold}%) aşan: {len(raw_candidates)}")
 
     # 5. Aday koinler varsa fonlama (funding) oranlarını ve Short sinyallerini hesapla
     if raw_candidates:
