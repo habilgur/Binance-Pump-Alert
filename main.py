@@ -130,7 +130,7 @@ def send_ranking_report(all_ranked_items: list, limit: int, threshold: float, fu
 
         badge = "🥇" if idx == 1 else "🥈" if idx == 2 else "🥉" if idx == 3 else f"{idx}."
 
-        line1 = f"{badge} *{sym}* (+%{pct:.1f}) • `{clean_p}$`"
+        line1 = f"{badge} *{sym}* (+%{pct:.1f}) • *{clean_p}$*"
         line2 = f"   Fon: `{funding_str}` • Vol: `{vol_str}`"
         line3 = f"   Sinyal: *{signal}* • Pullback: `-%{ret_pct:.1f}`"
 
@@ -414,7 +414,7 @@ def filter_alerts_anti_spam(raw_alerts: list, state: dict) -> tuple[list, dict]:
             clean_price = format_price(price)
 
             # Clean Dashboard Formatı
-            line1 = f"🚀 *{futures_symbol}* (+%{percent:.1f}){status_note} • `{clean_price}$`"
+            line1 = f"🚀 *{futures_symbol}* (+%{percent:.1f}){status_note} • *{clean_price}$*"
             line2 = f"   Fon: `{funding_str}` • Vol: `{vol_str}`"
             line3 = f"   Sinyal: *{signal}* • Pullback: `-%{ret_pct:.1f}`"
 
