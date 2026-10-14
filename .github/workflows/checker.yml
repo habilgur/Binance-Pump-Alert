@@ -18,6 +18,13 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Cloudflare WARP Kurulumu (Binance Kısıt Aşma)
+        uses: fscarmen/warp-on-actions@v1.4
+
+      - name: Çıkış IP Bölge Kontrolü
+        run: |
+          curl -s https://www.cloudflare.com/cdn-cgi/trace | grep -E "ip|loc"
+
       - name: Python Kurulumu
         uses: actions/setup-python@v5
         with:
