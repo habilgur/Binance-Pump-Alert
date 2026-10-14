@@ -45,8 +45,10 @@ def save_state(state: dict):
     except Exception as e:
         print(f"[HATA] {STATE_FILE} kaydedilemedi: {e}")
 
-def load_futures_symbols() -> set:
-    """Yalnızca aktif Binance Vadeli İşlemler (Futures) paritelerini yükler/günceller."""
+def load_futures_symbols(state: dict | None = None) -> set:
+    """Yalnızca aktif Binance Vadeli İşlemler (Futures) paritelerini yükler/günceller.
+    Kota tasarrufu için parite listesini her 5 dakikada bir değil, günde 1 kez günceller.
+    """
     symbols = set()
     if os.path.exists(FUTURES_SYMBOLS_FILE):
         try:
@@ -55,7 +57,13 @@ def load_futures_symbols() -> set:
         except Exception:
             pass
 
-    # Eğer API erişilebilir durumdaysa vadeli işlem paritelerini canlı güncelle
+    now = time.time()
+    last_update = state.get("last_symbols_update", 0) if state else 0
+    # Eğer semboller mevcutsa ve 24 saat dolmadıysa API çağrısı yapma (Aylık ~1GB kota tasarrufu)
+    if symbols and (now - last_update) < 24 * 3600:
+        return symbols
+
+    # 24 saat dolmuşsa veya dosya boşsa API'den güncelle
     try:
         res = requests.get("https://fapi.binance.com/fapi/v1/exchangeInfo", proxies=get_proxies(), timeout=10)
         if res.status_code == 200:
@@ -65,6 +73,8 @@ def load_futures_symbols() -> set:
             ]
             if api_symbols:
                 symbols = set(api_symbols)
+                if state is not None:
+                    state["last_symbols_update"] = now
                 with open(FUTURES_SYMBOLS_FILE, "w", encoding="utf-8") as f:
                     json.dump(sorted(api_symbols), f, indent=2)
                 print(f"[BİLGİ] Vadeli işlemler parite listesi güncellendi ({len(symbols)} adet).")
@@ -374,7 +384,7 @@ def check_binance_spikes():
     state = load_state()
 
     # 2. Aktif Binance Futures parite listesini al (Sadece Vadeli İşlemlerde Olanlar)
-    futures_symbols = load_futures_symbols()
+    futures_symbols = load_futures_symbols(state)
     print(f"[BİLGİ] Takip edilen aktif Binance Futures parite sayısı: {len(futures_symbols)}")
 
     # 3. Telegram'dan gelen komutları kontrol et (/esik 80 vb.)
