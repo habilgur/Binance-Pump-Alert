@@ -1,11 +1,11 @@
-fl=1291f75
+fl=28f705
 h=www.cloudflare.com
-ip=104.28.196.79
-ts=1791960339.000
+ip=104.28.201.162
+ts=1791960635.000
 visit_scheme=https
 uag=curl/8.5.0
-colo=IAD
-sliver=none
+colo=SEA
+sliver=050-tier1
 http=http/2
 loc=US
 tls=TLSv1.3
