@@ -8,6 +8,12 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 STATE_FILE = "state.json"
 FUTURES_SYMBOLS_FILE = "futures_symbols.json"
+PROXY_URL = os.getenv("PROXY_URL") or "http://aytvrfob-DE-ES-GB-PL:04s83ihzhhoq@64.137.10.153:5803/"
+
+def get_proxies() -> dict | None:
+    if PROXY_URL:
+        return {"http": PROXY_URL, "https": PROXY_URL}
+    return None
 
 # Anti-Spam Yapılandırması
 COOLDOWN_SECONDS = 4 * 3600   # 4 saat (Aynı koin için 4 saat boyunca tekrar bildirim atılmaz)
@@ -51,7 +57,7 @@ def load_futures_symbols() -> set:
 
     # Eğer API erişilebilir durumdaysa vadeli işlem paritelerini canlı güncelle
     try:
-        res = requests.get("https://fapi.binance.com/fapi/v1/exchangeInfo", timeout=5)
+        res = requests.get("https://fapi.binance.com/fapi/v1/exchangeInfo", proxies=get_proxies(), timeout=10)
         if res.status_code == 200:
             api_symbols = [
                 s["symbol"] for s in res.json().get("symbols", [])
@@ -180,10 +186,12 @@ def fetch_tickers():
         ("Binance Global Data", "https://data-api.binance.vision/api/v3/ticker/24hr"),
     ]
 
+    proxies = get_proxies()
     for source_name, url in endpoints:
         try:
             print(f"[BİLGİ] {source_name} verileri alınıyor ({url})...")
-            response = requests.get(url, timeout=15)
+            use_proxies = proxies if "fapi.binance.com" in url else None
+            response = requests.get(url, proxies=use_proxies, timeout=15)
             print(f"[BİLGİ] {source_name} yanıt kodu: {response.status_code}")
             if response.status_code != 200:
                 print(f"[UYARI] {source_name} başarısız (HTTP {response.status_code}): {response.text[:200]}")
@@ -220,10 +228,11 @@ def fetch_funding_map() -> dict:
     """Binance Futures üzerinden paritelerin fonlama oranı ve fonlama aralığını (saat) çeker."""
     funding_map = {}
     intervals = {}
+    proxies = get_proxies()
 
     # 1. Paritelerin fonlama aralığı (kaç saatte bir)
     try:
-        res = requests.get("https://fapi.binance.com/fapi/v1/fundingInfo", timeout=10)
+        res = requests.get("https://fapi.binance.com/fapi/v1/fundingInfo", proxies=proxies, timeout=10)
         if res.status_code == 200:
             for item in res.json():
                 sym = item.get("symbol")
@@ -235,7 +244,7 @@ def fetch_funding_map() -> dict:
 
     # 2. Paritelerin anlık fonlama oranı (lastFundingRate)
     try:
-        res = requests.get("https://fapi.binance.com/fapi/v1/premiumIndex", timeout=10)
+        res = requests.get("https://fapi.binance.com/fapi/v1/premiumIndex", proxies=proxies, timeout=10)
         if res.status_code == 200:
             data = res.json()
             if isinstance(data, list):
