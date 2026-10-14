@@ -393,13 +393,13 @@ def filter_alerts_anti_spam(raw_alerts: list, state: dict) -> tuple[list, dict]:
             if time_since_last >= COOLDOWN_SECONDS:
                 # 2. Durum: 4 saatlik cooldown süresi dolmuş, koin hala yüksek
                 should_alert = True
-                status_note = " *(🔄 Devam Ediyor)*"
+                status_note = "   🔄 *Trend Devam Ediyor*"
                 history[futures_symbol] = {"time": now, "percent": percent, "price": price}
             elif percent >= (last_percent + STEP_UP_PERCENT):
                 # 3. Durum: 4 saat dolmamış ama koin +%15 daha fırlamış (Yeni Zirve!)
                 should_alert = True
                 diff = percent - last_percent
-                status_note = f" *(🔥 Zirve Tazeledi: +%{diff:.1f} daha arttı)*"
+                status_note = f"   🔥 *Zirve Tazeledi: +%{diff:.1f} daha arttı*"
                 history[futures_symbol] = {"time": now, "percent": percent, "price": price}
             else:
                 # 4. Durum: Kısa süre önce bildirilmiş, yeni ek yükseliş yok -> SPAM'I ENGELLE
@@ -414,11 +414,15 @@ def filter_alerts_anti_spam(raw_alerts: list, state: dict) -> tuple[list, dict]:
             clean_price = format_price(price)
 
             # Clean Dashboard Formatı
-            line1 = f"🚀 *{futures_symbol}* (+%{percent:.1f}){status_note} • *{clean_price}$*"
-            line2 = f"   Fon: `{funding_str}` • Vol: `{vol_str}`"
-            line3 = f"   Sinyal: *{signal}* • Pullback: `-%{ret_pct:.1f}`"
+            lines = [
+                f"🚀 *{futures_symbol}* (+%{percent:.1f}) • *{clean_price}$*"
+            ]
+            if status_note:
+                lines.append(status_note)
+            lines.append(f"   Fon: `{funding_str}` • Vol: `{vol_str}`")
+            lines.append(f"   Sinyal: *{signal}* • Pullback: `-%{ret_pct:.1f}`")
 
-            filtered_messages.append(f"{line1}\n{line2}\n{line3}")
+            filtered_messages.append("\n".join(lines))
 
     return filtered_messages, state
 
