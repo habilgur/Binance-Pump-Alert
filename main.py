@@ -188,13 +188,13 @@ def process_telegram_commands(state: dict) -> tuple[dict, int | None]:
         # Anlık Sıralama komutları: /check, /check 5, /siralama, /top, /rank
         if text_lower.startswith(("/check", "/siralama", "/top", "/rank", "/liste")):
             parts = text.split()
-            limit = 10
+            limit = 3
             if len(parts) >= 2:
                 try:
                     requested_count = int(parts[1])
                     limit = max(1, min(requested_count, 25))
                 except ValueError:
-                    limit = 10
+                    limit = 3
             check_limit = limit
             print(f"[BİLGİ] Sıralama komutu algılandı: Limit = {check_limit}")
 
@@ -224,7 +224,7 @@ def process_telegram_commands(state: dict) -> tuple[dict, int | None]:
                 f"• Tarama Aralığı: *Her 5 dakikada bir*\n"
                 f"• Anti-Spam Koruması: *Aktif (4 saat cooldown / +%15 kademeli zirve)*\n\n"
                 f"Kullanabileceğiniz Komutlar:\n"
-                f"• `/check` : O andaki en çok artan Futures koinlerin sıralamasını verir\n"
+                f"• `/check` veya `/top` : Anlık sıralamayı verir (varsayılan ilk 3)\n"
                 f"• `/esik <yüzde>` : Alarm eşiğini değiştirir (Örn: `/esik 75`)"
             )
 
@@ -233,8 +233,8 @@ def process_telegram_commands(state: dict) -> tuple[dict, int | None]:
             send_telegram(
                 f"🤖 *Binance Futures Spike Alert Botu*\n\n"
                 f"Kullanabileceğiniz komutlar:\n"
-                f"• `/check` : O andaki en çok artan Futures koinlerin sıralamasını (Top 10) verir\n"
-                f"• `/check 5` : İstediğiniz sayıda (örn: ilk 5) koin listeler\n"
+                f"• `/check` veya `/top` : Anlık en çok artan ilk 3 Futures koini listeler\n"
+                f"• `/check 5` veya `/top 10` : İstediğiniz sayıda koin listeler\n"
                 f"• `/esik 80` : Alarm eşiğini %80 yapar\n"
                 f"• `/durum` : Mevcut ayarları ve bot durumunu gösterir\n"
                 f"• `/yardim` : Bu mesajı gösterir\n\n"

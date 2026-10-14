@@ -40,8 +40,8 @@ GitHub Actions ve `cron-job.org` entegrasyonu sayesinde herhangi bir sunucu (VPS
 
 | Komut | Açıklama | Örnek |
 | :--- | :--- | :--- |
-| `/check` | O andaki en çok artan Futures koinlerin anlık sıralamasını (Top 10) verir | `/check` |
-| `/check <adet>` | Belirttiğiniz adette (örn: ilk 5 veya 15) koin sıralaması verir | `/check 5` veya `/check 15` |
+| `/check` veya `/top` | O andaki en çok artan Futures koinlerin anlık sıralamasını (Top 3) verir | `/check` veya `/top` |
+| `/check <adet>` veya `/top <adet>` | Belirttiğiniz adette (örn: ilk 5 veya 10) koin sıralaması verir | `/check 5` veya `/top 10` |
 | `/esik <yüzde>` | Bildirim alarm eşiğini anında günceller | `/esik 70` veya `/esik 100` |
 | `<sayı>` | Komut yazmadan sadece sayı da gönderebilirsiniz | `80` veya `%65` |
 | `/durum` | Aktif eşik ve takipteki koin sayısını gösterir | `/durum` |
