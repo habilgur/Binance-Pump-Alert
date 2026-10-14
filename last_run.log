@@ -1,6 +1,4 @@
 [BİLGİ] Takip edilen aktif Binance Futures parite sayısı: 568
-[BİLGİ] Telegram'dan yeni mesaj alındı: /durum
-[BİLGİ] Telegram bildirimi iletildi.
 [BİLGİ] Aktif Futures alarm eşiği: %45.0
 [BİLGİ] Binance Futures verileri alınıyor (https://fapi.binance.com/fapi/v1/ticker/24hr)...
 [BİLGİ] Binance Futures yanıt kodu: 451
@@ -10,7 +8,7 @@
 [BİLGİ] Binance Global Data verileri alınıyor (https://data-api.binance.vision/api/v3/ticker/24hr)...
 [BİLGİ] Binance Global Data yanıt kodu: 200
 [BİLGİ] Binance Global Data üzerinden 3728 veri başarıyla alındı.
-[BİLGİ] Toplam 365 adet Futures USDT çifti tarandı (Binance Global Data). En çok artan ilk 5: [('WALUSDT', 25.98), ('AVAUSDT', 25.053), ('OPUSDT', 10.83), ('IOTXUSDT', 9.045), ('KMNOUSDT', 6.866)]
+[BİLGİ] Toplam 365 adet Futures USDT çifti tarandı (Binance Global Data). En çok artan ilk 5: [('AVAUSDT', 26.078), ('WALUSDT', 23.86), ('OPUSDT', 10.655), ('IOTXUSDT', 9.372), ('KMNOUSDT', 8.11)]
 [BİLGİ] Eşiği (>=45.0%) aşan: 0
 [BİLGİ] Gönderilecek yeni/spam olmayan Futures bildirimi bulunamadı.
 [BİLGİ] Durum (state.json) başarıyla kaydedildi.
