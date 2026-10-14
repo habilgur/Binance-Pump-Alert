@@ -80,6 +80,18 @@ GitHub Actions'ın dahili cron mekanizması yoğun saatlerde gecikebilir. **cron
 
 ---
 
+## 🌐 Hızlı Erişim & Yönetim Panelleri
+
+Botun bulut servislerini izlemek ve yönetmek için kullanılan kontrol panelleri:
+
+* ⏱️ **Cron-Job Tetikleyici Paneli:** [console.cron-job.org/dashboard](https://console.cron-job.org/dashboard)  
+  *İşlerin 5 dakikada bir başarıyla yürütüldüğünü ve `204 No Content` teyitlerini buradan izleyebilirsiniz.*
+
+* 🛡️ **Webshare Proxy Paneli:** [dashboard.webshare.io/dashboard](https://dashboard.webshare.io/dashboard)  
+  *Binance Futures bölge kısıtını (HTTP 451) aşan Avrupa (Almanya, İspanya vb.) döner proxy hattını ve 1 GB ücretsiz bant genişliği kullanımını buradan takip edebilirsiniz.*
+
+---
+
 ## 📁 Proje Dosya Yapısı
 
 ```
