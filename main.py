@@ -105,9 +105,54 @@ def send_telegram(message: str) -> bool:
         print(f"[HATA] Telegram mesajı gönderilemedi: {e}")
         return False
 
-def process_telegram_commands(state: dict) -> dict:
+def send_ranking_report(all_ranked_items: list, limit: int, threshold: float, funding_map: dict | None = None):
+    top_items = all_ranked_items[:limit]
+    if not top_items:
+        send_telegram("⚠️ Şu anda görüntülenecek vadeli işlem sıralaması bulunamadı.")
+        return
+
+    report_lines = [
+        f"🏆 *Binance Futures Anlık Sıralama (Top {len(top_items)})*",
+        f"🎯 Aktif Eşik: *%{threshold:.1f}* | Toplam Parite: *{len(all_ranked_items)}*"
+    ]
+
+    for idx, item in enumerate(top_items, 1):
+        sym = item["futures_symbol"]
+        pct = item["percent"]
+        clean_p = format_price(item["price"])
+        ret_pct = item.get("ret_pct", 0.0)
+        vol_str = item.get("vol_str", "")
+
+        f_info = funding_map.get(sym) if funding_map else None
+        rate_pct = f_info["rate_percent"] if f_info else None
+        interval_hours = f_info["interval_hours"] if f_info else None
+        funding_str = format_funding_info(rate_pct, interval_hours) if f_info else ""
+        signal = get_short_signal(ret_pct, rate_pct, interval_hours)
+
+        badge = "🥇" if idx == 1 else "🥈" if idx == 2 else "🥉" if idx == 3 else f"{idx}."
+
+        detail_parts = [f"Ret: `-%{ret_pct:.1f}`"]
+        if vol_str:
+            detail_parts.append(f"Hacim: `{vol_str}`")
+        if funding_str:
+            detail_parts.append(f"Fon: `{funding_str}`")
+
+        detail_str = " | ".join(detail_parts)
+
+        report_lines.append(
+            f"{badge} *{sym}* (+%{pct:.1f}) — `{clean_p}$`\n"
+            f"   • {detail_str}\n"
+            f"   • Sinyal: *{signal}*"
+        )
+
+    full_message = "\n\n".join(report_lines)
+    send_telegram(full_message)
+    print(f"[BİLGİ] Anlık sıralama raporu (Top {len(top_items)}) Telegram'a iletildi.")
+
+def process_telegram_commands(state: dict) -> tuple[dict, int | None]:
+    check_limit = None
     if not TELEGRAM_TOKEN or not CHAT_ID:
-        return state
+        return state, check_limit
 
     last_update_id = state.get("last_update_id", 0)
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/getUpdates"
@@ -119,7 +164,7 @@ def process_telegram_commands(state: dict) -> dict:
         updates = res.json().get("result", [])
     except Exception as e:
         print(f"[UYARI] Telegram komutları alınamadı: {e}")
-        return state
+        return state, check_limit
 
     for update in updates:
         update_id = update.get("update_id", 0)
@@ -140,8 +185,21 @@ def process_telegram_commands(state: dict) -> dict:
         text_lower = text.lower()
         print(f"[BİLGİ] Telegram'dan yeni mesaj alındı: {text}")
 
+        # Anlık Sıralama komutları: /check, /check 5, /siralama, /top, /rank
+        if text_lower.startswith(("/check", "/siralama", "/top", "/rank", "/liste")):
+            parts = text.split()
+            limit = 10
+            if len(parts) >= 2:
+                try:
+                    requested_count = int(parts[1])
+                    limit = max(1, min(requested_count, 25))
+                except ValueError:
+                    limit = 10
+            check_limit = limit
+            print(f"[BİLGİ] Sıralama komutu algılandı: Limit = {check_limit}")
+
         # Eşik değiştirme komutları: /esik 70, /threshold 80, /set 60
-        if text_lower.startswith(("/esik", "/threshold", "/set")):
+        elif text_lower.startswith(("/esik", "/threshold", "/set")):
             parts = text.split()
             if len(parts) >= 2:
                 try:
@@ -165,7 +223,9 @@ def process_telegram_commands(state: dict) -> dict:
                 f"• Fonlama (Funding): *Oran ve Aralık [Örn: %-2.2 1(h)]*\n"
                 f"• Tarama Aralığı: *Her 5 dakikada bir*\n"
                 f"• Anti-Spam Koruması: *Aktif (4 saat cooldown / +%15 kademeli zirve)*\n\n"
-                f"Eşiği değiştirmek için: `/esik <yüzde>` (Örn: `/esik 75`)"
+                f"Kullanabileceğiniz Komutlar:\n"
+                f"• `/check` : O andaki en çok artan Futures koinlerin sıralamasını verir\n"
+                f"• `/esik <yüzde>` : Alarm eşiğini değiştirir (Örn: `/esik 75`)"
             )
 
         elif text_lower in ["/yardim", "/help", "/start"]:
@@ -173,6 +233,8 @@ def process_telegram_commands(state: dict) -> dict:
             send_telegram(
                 f"🤖 *Binance Futures Spike Alert Botu*\n\n"
                 f"Kullanabileceğiniz komutlar:\n"
+                f"• `/check` : O andaki en çok artan Futures koinlerin sıralamasını (Top 10) verir\n"
+                f"• `/check 5` : İstediğiniz sayıda (örn: ilk 5) koin listeler\n"
                 f"• `/esik 80` : Alarm eşiğini %80 yapar\n"
                 f"• `/durum` : Mevcut ayarları ve bot durumunu gösterir\n"
                 f"• `/yardim` : Bu mesajı gösterir\n\n"
@@ -188,7 +250,7 @@ def process_telegram_commands(state: dict) -> dict:
             except ValueError:
                 pass
 
-    return state
+    return state, check_limit
 
 def fetch_tickers():
     endpoints = [
@@ -387,8 +449,8 @@ def check_binance_spikes():
     futures_symbols = load_futures_symbols(state)
     print(f"[BİLGİ] Takip edilen aktif Binance Futures parite sayısı: {len(futures_symbols)}")
 
-    # 3. Telegram'dan gelen komutları kontrol et (/esik 80 vb.)
-    state = process_telegram_commands(state)
+    # 3. Telegram'dan gelen komutları kontrol et (/esik 80, /check vb.)
+    state, check_limit = process_telegram_commands(state)
     active_threshold = state.get("threshold", 50.0)
     print(f"[BİLGİ] Aktif Futures alarm eşiği: %{active_threshold:.1f}")
 
@@ -396,10 +458,10 @@ def check_binance_spikes():
     source_name, tickers = fetch_tickers()
 
     raw_candidates = []
+    all_matched_items = []
     total_usdt_pairs = 0
     futures_matched = 0
 
-    all_matched = []
     for ticker in tickers:
         symbol = ticker.get("symbol", "")
         if symbol.endswith("USDT"):
@@ -415,7 +477,6 @@ def check_binance_spikes():
 
             try:
                 price_change_percent = float(ticker.get("priceChangePercent", 0.0))
-                all_matched.append((futures_symbol, price_change_percent))
                 last_price = ticker.get("lastPrice", "0")
                 high_price = ticker.get("highPrice", last_price)
                 quote_volume = float(ticker.get("quoteVolume", 0.0))
@@ -427,32 +488,45 @@ def check_binance_spikes():
                 else:
                     ret_pct = 0.0
 
+                item_data = {
+                    "futures_symbol": futures_symbol,
+                    "percent": price_change_percent,
+                    "price": last_price,
+                    "high_price": high_price,
+                    "ret_pct": ret_pct,
+                    "vol_str": format_volume(quote_volume),
+                }
+
+                all_matched_items.append(item_data)
                 if price_change_percent >= active_threshold:
-                    raw_candidates.append({
-                        "futures_symbol": futures_symbol,
-                        "percent": price_change_percent,
-                        "price": last_price,
-                        "high_price": high_price,
-                        "ret_pct": ret_pct,
-                        "vol_str": format_volume(quote_volume),
-                    })
+                    raw_candidates.append(item_data)
             except (ValueError, TypeError):
                 continue
 
     # Değişime göre Z-A (en çok artandan az artana) sırala
+    all_matched_items.sort(key=lambda x: x["percent"], reverse=True)
     raw_candidates.sort(key=lambda x: x["percent"], reverse=True)
 
-    top_5 = sorted(all_matched, key=lambda x: x[1], reverse=True)[:5]
+    top_5 = [(x["futures_symbol"], round(x["percent"], 1)) for x in all_matched_items[:5]]
     print(f"[BİLGİ] Toplam {futures_matched} adet Futures USDT çifti tarandı ({source_name}). En çok artan ilk 5: {top_5}")
     print(f"[BİLGİ] Eşiği (>={active_threshold}%) aşan: {len(raw_candidates)}")
 
-    # 5. Aday koinler varsa fonlama (funding) oranlarını ve Short sinyallerini hesapla
-    if raw_candidates:
-        print(f"[BİLGİ] {len(raw_candidates)} adet aday için fonlama (funding) ve sinyal bilgileri alınıyor...")
+    # 5. Fonlama (funding) verilerini çek (Aday koinler veya /check isteği varsa)
+    funding_map = None
+    if raw_candidates or check_limit:
+        print(f"[BİLGİ] Fonlama (funding) ve sinyal bilgileri alınıyor...")
         funding_map = fetch_funding_map()
+
+    # 6. /check komutu verilmişse anlık sıralama raporunu gönder
+    if check_limit:
+        print(f"[BİLGİ] /check komutu için anlık sıralama raporu oluşturuluyor (Limit: {check_limit})...")
+        send_ranking_report(all_matched_items, check_limit, active_threshold, funding_map)
+
+    # 7. Aday koinler varsa fonlama oranlarını ve Short sinyallerini ata
+    if raw_candidates:
         for cand in raw_candidates:
             sym = cand["futures_symbol"]
-            f_info = funding_map.get(sym)
+            f_info = funding_map.get(sym) if funding_map else None
             rate_pct = None
             interval_hours = None
             if f_info:
@@ -464,10 +538,10 @@ def check_binance_spikes():
 
             cand["signal"] = get_short_signal(cand["ret_pct"], rate_pct, interval_hours)
 
-    # 6. Anti-Spam filtresinden geçir
+    # 8. Anti-Spam filtresinden geçir
     alerts, state = filter_alerts_anti_spam(raw_candidates, state)
 
-    # 7. Yeni bildirim varsa gönder
+    # 9. Yeni bildirim varsa gönder
     if alerts:
         msg = (
             f"🔥 *Binance Futures Yüksek Performans Uyarısı (>=%{active_threshold:.1f})*\n\n"
@@ -478,7 +552,7 @@ def check_binance_spikes():
     else:
         print("[BİLGİ] Gönderilecek yeni/spam olmayan Futures bildirimi bulunamadı.")
 
-    # 8. Güncellenmiş durumu kaydet
+    # 10. Güncellenmiş durumu kaydet
     save_state(state)
 
 if __name__ == "__main__":
