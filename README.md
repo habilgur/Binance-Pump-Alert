@@ -25,11 +25,11 @@ GitHub Actions ve `cron-job.org` entegrasyonu sayesinde herhangi bir sunucu (VPS
 
 4. **🎯 Short Fırsat Analizi & Dashboard Bildirimleri:**
    * Hiçbir parite elenmeden tüm adaylar bildirilir; ancak anında karar verebilmeniz için analiz parametreleri eklenir:
-     - **Zirveden Ret (Pullback):** Günün en yüksek fiyatından ne kadar çekildiği (en az %1.5 çekilme `✅ DÜZELTME` kabul edilir).
-     - **24s Vadeli Hacim:** Likidite derinliği (`92M$`, `1.2B$` vb.).
-     - **Fonlama (Funding):** Anlık fonlama oranı ve saat aralığı (`%-2.2 1(h)` vb.).
-     - **Sinyal:** `✅ DÜZELTME`, `⚠️ HALA TEPEDE`, `🚨 SQUEEZE RİSKİ`.
-   * Mobil bildirimlerde 1 saniyede okunabilecek ultra-clean dashboard formatı kullanılır.
+     - **Pullback:** Günün en yüksek fiyatından ne kadar çekildiği (en az %1.5 çekilme `Düzeltme` kabul edilir).
+     - **Vol (Vadeli Hacim):** 24 saatlik vadeli likidite derinliği (`92M$`, `1.2B$` vb.).
+     - **Fon (Funding):** Anlık fonlama oranı ve saat aralığı (`+0.03% (4h)`, `-0.60% (4h)` vb.).
+     - **Sinyal:** `Düzeltme`, `Tepe`, `Squeeze`.
+   * Mobil bildirimlerde 1 saniyede okunabilecek ultra-clean 3 satırlı format kullanılır.
 
 5. **⚡ Kesintisiz Çalışma (Bölgesel Kısıt / Fallback Koruması):**
    * GitHub Actions bulut sunucularındaki olası bölgesel kısıtlamalara (HTTP 451) karşı Binance Futures ve Global Data kaynaklarını akıllı şekilde yönetir.

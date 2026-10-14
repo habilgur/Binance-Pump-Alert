@@ -112,8 +112,7 @@ def send_ranking_report(all_ranked_items: list, limit: int, threshold: float, fu
         return
 
     report_lines = [
-        f"🏆 *Binance Futures Anlık Sıralama (Top {len(top_items)})*",
-        f"🎯 Aktif Eşik: *%{threshold:.1f}* | Toplam Parite: *{len(all_ranked_items)}*"
+        "🏆 *Binance Futures Anlık Sıralama*"
     ]
 
     for idx, item in enumerate(top_items, 1):
@@ -126,24 +125,16 @@ def send_ranking_report(all_ranked_items: list, limit: int, threshold: float, fu
         f_info = funding_map.get(sym) if funding_map else None
         rate_pct = f_info["rate_percent"] if f_info else None
         interval_hours = f_info["interval_hours"] if f_info else None
-        funding_str = format_funding_info(rate_pct, interval_hours) if f_info else ""
+        funding_str = format_funding_info(rate_pct, interval_hours) if (rate_pct is not None and interval_hours is not None) else "-"
         signal = get_short_signal(ret_pct, rate_pct, interval_hours)
 
         badge = "🥇" if idx == 1 else "🥈" if idx == 2 else "🥉" if idx == 3 else f"{idx}."
 
-        detail_parts = [f"Ret: `-%{ret_pct:.1f}`"]
-        if vol_str:
-            detail_parts.append(f"Hacim: `{vol_str}`")
-        if funding_str:
-            detail_parts.append(f"Fon: `{funding_str}`")
+        line1 = f"{badge} *{sym}* (+%{pct:.1f}) • `{clean_p}$`"
+        line2 = f"   Fon: `{funding_str}` • Vol: `{vol_str}`"
+        line3 = f"   Sinyal: *{signal}* • Pullback: `-%{ret_pct:.1f}`"
 
-        detail_str = " | ".join(detail_parts)
-
-        report_lines.append(
-            f"{badge} *{sym}* (+%{pct:.1f}) — `{clean_p}$`\n"
-            f"   • {detail_str}\n"
-            f"   • Sinyal: *{signal}*"
-        )
+        report_lines.append(f"{line1}\n{line2}\n{line3}")
 
     full_message = "\n\n".join(report_lines)
     send_telegram(full_message)
@@ -289,12 +280,9 @@ def match_futures_symbol(symbol: str, futures_set: set) -> str | None:
     return None
 
 def format_funding_info(rate_percent: float, interval_hours: int) -> str:
-    """Fonlama oranı ve saat aralığını formatlar. Örnek: %-2.2 1(h) veya %+0.01 8(h)"""
+    """Fonlama oranı ve saat aralığını formatlar. Örnek: +0.03% (4h) veya -0.60% (4h)"""
     sign = "+" if rate_percent > 0 else ""
-    formatted = f"{rate_percent:.4f}".rstrip("0").rstrip(".")
-    if not formatted or formatted == "-0":
-        formatted = "0.0"
-    return f"%{sign}{formatted} {interval_hours}(h)"
+    return f"{sign}{rate_percent:.2f}% ({interval_hours}h)"
 
 def fetch_funding_map() -> dict:
     """Binance Futures üzerinden paritelerin fonlama oranı ve fonlama aralığını (saat) çeker."""
@@ -356,9 +344,10 @@ def format_volume(vol_float: float) -> str:
     if vol_float >= 1_000_000_000:
         return f"{vol_float / 1_000_000_000:.1f}B$"
     elif vol_float >= 1_000_000:
-        return f"{vol_float / 1_000_000:.1f}M$"
+        val = vol_float / 1_000_000
+        return f"{val:.0f}M$" if val >= 10 else f"{val:.1f}M$"
     elif vol_float >= 1_000:
-        return f"{vol_float / 1_000:.1f}K$"
+        return f"{vol_float / 1_000:.0f}K$"
     return f"{vol_float:.0f}$"
 
 def get_short_signal(ret_pct: float, rate_pct: float | None, interval_hours: int | None) -> str:
@@ -366,11 +355,11 @@ def get_short_signal(ret_pct: float, rate_pct: float | None, interval_hours: int
     # 1. Aşırı negatif fonlama kontrolü (Short Squeeze riski)
     if rate_pct is not None and interval_hours is not None:
         if (interval_hours <= 4 and rate_pct <= -0.75) or rate_pct <= -1.0:
-            return "🚨 SQUEEZE RİSKİ"
+            return "Squeeze"
     # 2. Zirveden çekilme eşiği (en az %1.5)
     if ret_pct >= 1.5:
-        return "✅ DÜZELTME"
-    return "⚠️ HALA TEPEDE"
+        return "Düzeltme"
+    return "Tepe"
 
 def filter_alerts_anti_spam(raw_alerts: list, state: dict) -> tuple[list, dict]:
     history = state.get("history", {})
@@ -417,25 +406,17 @@ def filter_alerts_anti_spam(raw_alerts: list, state: dict) -> tuple[list, dict]:
                 print(f"[SPAM ENGELİ] {futures_symbol} daha önce %{last_percent:.1f} ile bildirilmişti (Şu an: %{percent:.1f}). Tekrar bildirilmedi.")
 
         if should_alert:
-            signal = item.get("signal", "✅ DÜZELTME")
-            high_price = item.get("high_price", price)
+            signal = item.get("signal", "Düzeltme")
             ret_pct = item.get("ret_pct", 0.0)
             vol_str = item.get("vol_str", "")
-            funding_str = item.get("funding_str", "")
+            funding_str = item.get("funding_str", "-")
 
             clean_price = format_price(price)
-            clean_high = format_price(high_price)
 
-            # Seçenek B: Ultra-Minimalist Dashboard Formatı
-            line1 = f"🚀 *{futures_symbol}* (+%{percent:.1f}){status_note} — *{signal}*"
-            line2 = f"• Fiyat: `{clean_price}$` (Zirve: `{clean_high}$`)"
-
-            detail_parts = [f"Ret: `-%{ret_pct:.1f}`"]
-            if vol_str:
-                detail_parts.append(f"Hacim: `{vol_str}`")
-            if funding_str:
-                detail_parts.append(f"Fonlama: `{funding_str}`")
-            line3 = f"• {' | '.join(detail_parts)}"
+            # Clean Dashboard Formatı
+            line1 = f"🚀 *{futures_symbol}* (+%{percent:.1f}){status_note} • `{clean_price}$`"
+            line2 = f"   Fon: `{funding_str}` • Vol: `{vol_str}`"
+            line3 = f"   Sinyal: *{signal}* • Pullback: `-%{ret_pct:.1f}`"
 
             filtered_messages.append(f"{line1}\n{line2}\n{line3}")
 
