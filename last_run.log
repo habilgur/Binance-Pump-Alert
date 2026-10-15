@@ -3,10 +3,10 @@
 [BİLGİ] Binance Futures verileri alınıyor (https://fapi.binance.com/fapi/v1/ticker/24hr)...
 [BİLGİ] Binance Futures yanıt kodu: 200
 [BİLGİ] Binance Futures üzerinden 793 veri başarıyla alındı.
-[BİLGİ] Toplam 526 adet Futures USDT çifti tarandı (Binance Futures). En çok artan ilk 5: [('ZEREBROUSDT', 46.1), ('WALUSDT', 45.3), ('QUSDT', 20.8), ('ARCUSDT', 17.8), ('AVAUSDT', 14.6)]
+[BİLGİ] Toplam 526 adet Futures USDT çifti tarandı (Binance Futures). En çok artan ilk 5: [('WALUSDT', 46.0), ('ZEREBROUSDT', 45.7), ('QUSDT', 21.0), ('ARCUSDT', 15.6), ('AVAUSDT', 14.2)]
 [BİLGİ] Eşiği (>=45.0%) aşan: 2
 [BİLGİ] Fonlama (funding) ve sinyal bilgileri alınıyor...
-[SPAM ENGELİ] ZEREBROUSDT daha önce %63.2 ile bildirilmişti (Şu an: %46.1). Tekrar bildirilmedi.
-[SPAM ENGELİ] WALUSDT daha önce %71.4 ile bildirilmişti (Şu an: %45.3). Tekrar bildirilmedi.
+[SPAM ENGELİ] WALUSDT daha önce %71.4 ile bildirilmişti (Şu an: %46.0). Tekrar bildirilmedi.
+[SPAM ENGELİ] ZEREBROUSDT daha önce %63.2 ile bildirilmişti (Şu an: %45.7). Tekrar bildirilmedi.
 [BİLGİ] Gönderilecek yeni/spam olmayan Futures bildirimi bulunamadı.
 [BİLGİ] Durum (state.json) başarıyla kaydedildi.
