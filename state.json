@@ -2,11 +2,6 @@
   "threshold": 45.0,
   "last_update_id": 661940651,
   "history": {
-    "BTWUSDT": {
-      "time": 1791960931.628164,
-      "percent": 48.576,
-      "price": "2.6503000"
-    },
     "TRUTHUSDT": {
       "time": 1791975664.3855994,
       "percent": 53.47,
@@ -23,5 +18,5 @@
       "price": "0.0399810"
     }
   },
-  "last_symbols_update": 1791960922.430297
+  "last_symbols_update": 1792047379.6493227
 }
