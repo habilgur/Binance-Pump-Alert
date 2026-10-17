@@ -3,10 +3,10 @@
 [BİLGİ] Binance Futures verileri alınıyor (https://fapi.binance.com/fapi/v1/ticker/24hr)...
 [BİLGİ] Binance Futures yanıt kodu: 200
 [BİLGİ] Binance Futures üzerinden 793 veri başarıyla alındı.
-[BİLGİ] Toplam 526 adet Futures USDT çifti tarandı (Binance Futures). En çok artan ilk 5: [('QUSDT', 120.6), ('AGTUSDT', 98.2), ('AVAUSDT', 40.1), ('ICNTUSDT', 39.5), ('BTWUSDT', 35.3)]
+[BİLGİ] Toplam 526 adet Futures USDT çifti tarandı (Binance Futures). En çok artan ilk 5: [('QUSDT', 120.0), ('AGTUSDT', 98.0), ('AVAUSDT', 41.7), ('ICNTUSDT', 38.0), ('BTWUSDT', 36.4)]
 [BİLGİ] Eşiği (>=45.0%) aşan: 2
 [BİLGİ] Fonlama (funding) ve sinyal bilgileri alınıyor...
-[SPAM ENGELİ] QUSDT daha önce %116.0 ile bildirilmişti (Şu an: %120.6). Tekrar bildirilmedi.
-[SPAM ENGELİ] AGTUSDT daha önce %96.9 ile bildirilmişti (Şu an: %98.2). Tekrar bildirilmedi.
+[SPAM ENGELİ] QUSDT daha önce %116.0 ile bildirilmişti (Şu an: %120.0). Tekrar bildirilmedi.
+[SPAM ENGELİ] AGTUSDT daha önce %96.9 ile bildirilmişti (Şu an: %98.0). Tekrar bildirilmedi.
 [BİLGİ] Gönderilecek yeni/spam olmayan Futures bildirimi bulunamadı.
 [BİLGİ] Durum (state.json) başarıyla kaydedildi.
