@@ -1,9 +1,10 @@
 [BİLGİ] Takip edilen aktif Binance Futures parite sayısı: 568
+[UYARI] Telegram komutları alınamadı: 409 Client Error: Conflict for url: https://api.telegram.org/bot8743987517:AAHYWt9cfWom3n-eLjQOjPBKowIukJbW6io/getUpdates?offset=661940652&timeout=5
 [BİLGİ] Aktif Futures alarm eşiği: %45.0
 [BİLGİ] Binance Futures verileri alınıyor (https://fapi.binance.com/fapi/v1/ticker/24hr)...
 [BİLGİ] Binance Futures yanıt kodu: 200
 [BİLGİ] Binance Futures üzerinden 793 veri başarıyla alındı.
-[BİLGİ] Toplam 526 adet Futures USDT çifti tarandı (Binance Futures). En çok artan ilk 5: [('ARIAUSDT', 31.9), ('ELSAUSDT', 15.8), ('SIRENUSDT', 13.8), ('ICNTUSDT', 12.9), ('GTCUSDT', 12.1)]
+[BİLGİ] Toplam 526 adet Futures USDT çifti tarandı (Binance Futures). En çok artan ilk 5: [('ARIAUSDT', 32.7), ('ELSAUSDT', 16.3), ('SIRENUSDT', 13.4), ('ICNTUSDT', 12.6), ('GTCUSDT', 12.0)]
 [BİLGİ] Eşiği (>=45.0%) aşan: 0
 [BİLGİ] Gönderilecek yeni/spam olmayan Futures bildirimi bulunamadı.
 [BİLGİ] Durum (state.json) başarıyla kaydedildi.
