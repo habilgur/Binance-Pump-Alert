@@ -3,10 +3,10 @@
 [BİLGİ] Binance Futures verileri alınıyor (https://fapi.binance.com/fapi/v1/ticker/24hr)...
 [BİLGİ] Binance Futures yanıt kodu: 200
 [BİLGİ] Binance Futures üzerinden 793 veri başarıyla alındı.
-[BİLGİ] Toplam 526 adet Futures USDT çifti tarandı (Binance Futures). En çok artan ilk 5: [('JCTUSDT', 136.4), ('DOODUSDT', 82.2), ('ARIAUSDT', 42.3), ('IOSTUSDT', 40.6), ('CLOUSDT', 21.5)]
+[BİLGİ] Toplam 526 adet Futures USDT çifti tarandı (Binance Futures). En çok artan ilk 5: [('JCTUSDT', 137.9), ('DOODUSDT', 83.4), ('ARIAUSDT', 42.6), ('IOSTUSDT', 41.7), ('CLOUSDT', 21.7)]
 [BİLGİ] Eşiği (>=45.0%) aşan: 2
 [BİLGİ] Fonlama (funding) ve sinyal bilgileri alınıyor...
-[SPAM ENGELİ] JCTUSDT daha önce %136.1 ile bildirilmişti (Şu an: %136.4). Tekrar bildirilmedi.
-[SPAM ENGELİ] DOODUSDT daha önce %86.6 ile bildirilmişti (Şu an: %82.2). Tekrar bildirilmedi.
+[SPAM ENGELİ] JCTUSDT daha önce %136.1 ile bildirilmişti (Şu an: %137.9). Tekrar bildirilmedi.
+[SPAM ENGELİ] DOODUSDT daha önce %86.6 ile bildirilmişti (Şu an: %83.4). Tekrar bildirilmedi.
 [BİLGİ] Gönderilecek yeni/spam olmayan Futures bildirimi bulunamadı.
 [BİLGİ] Durum (state.json) başarıyla kaydedildi.
