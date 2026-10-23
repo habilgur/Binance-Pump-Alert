@@ -5,7 +5,7 @@
 [BİLGİ] Binance Global Data verileri alınıyor (https://data-api.binance.vision/api/v3/ticker/24hr)...
 [BİLGİ] Binance Global Data yanıt kodu: 200
 [BİLGİ] Binance Global Data üzerinden 3739 veri başarıyla alındı.
-[BİLGİ] Toplam 365 adet Futures USDT çifti tarandı (Binance Global Data). En çok artan ilk 5: [('ARKUSDT', 19.6), ('REZUSDT', 11.4), ('1000PEPEUSDT', 10.2), ('SOPHUSDT', 10.1), ('AVAUSDT', 9.2)]
+[BİLGİ] Toplam 365 adet Futures USDT çifti tarandı (Binance Global Data). En çok artan ilk 5: [('ARKUSDT', 19.9), ('REZUSDT', 11.7), ('AVAUSDT', 10.7), ('1000PEPEUSDT', 9.9), ('SOPHUSDT', 9.5)]
 [BİLGİ] Eşiği (>=45.0%) aşan: 0
 [BİLGİ] Gönderilecek yeni/spam olmayan Futures bildirimi bulunamadı.
 [BİLGİ] Durum (state.json) başarıyla kaydedildi.
