@@ -5,12 +5,12 @@
 [BİLGİ] Binance Global Data verileri alınıyor (https://data-api.binance.vision/api/v3/ticker/24hr)...
 [BİLGİ] Binance Global Data yanıt kodu: 200
 [BİLGİ] Binance Global Data üzerinden 3739 veri başarıyla alındı.
-[BİLGİ] Toplam 365 adet Futures USDT çifti tarandı (Binance Global Data). En çok artan ilk 5: [('TUSDT', 54.3), ('BMTUSDT', 49.1), ('EPICUSDT', 26.1), ('NILUSDT', 15.9), ('ANIMEUSDT', 14.7)]
+[BİLGİ] Toplam 365 adet Futures USDT çifti tarandı (Binance Global Data). En çok artan ilk 5: [('TUSDT', 50.2), ('BMTUSDT', 46.6), ('EPICUSDT', 24.6), ('NILUSDT', 16.0), ('ANIMEUSDT', 14.3)]
 [BİLGİ] Eşiği (>=45.0%) aşan: 2
 [BİLGİ] Fonlama (funding) ve sinyal bilgileri alınıyor...
 [UYARI] fundingInfo alınamadı: HTTPSConnectionPool(host='fapi.binance.com', port=443): Max retries exceeded with url: /fapi/v1/fundingInfo (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 402 Payment Required')))
 [UYARI] premiumIndex alınamadı: HTTPSConnectionPool(host='fapi.binance.com', port=443): Max retries exceeded with url: /fapi/v1/premiumIndex (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 402 Payment Required')))
-[SPAM ENGELİ] TUSDT daha önce %46.2 ile bildirilmişti (Şu an: %54.3). Tekrar bildirilmedi.
-[SPAM ENGELİ] BMTUSDT daha önce %68.1 ile bildirilmişti (Şu an: %49.1). Tekrar bildirilmedi.
+[SPAM ENGELİ] TUSDT daha önce %46.2 ile bildirilmişti (Şu an: %50.2). Tekrar bildirilmedi.
+[SPAM ENGELİ] BMTUSDT daha önce %68.1 ile bildirilmişti (Şu an: %46.6). Tekrar bildirilmedi.
 [BİLGİ] Gönderilecek yeni/spam olmayan Futures bildirimi bulunamadı.
 [BİLGİ] Durum (state.json) başarıyla kaydedildi.
