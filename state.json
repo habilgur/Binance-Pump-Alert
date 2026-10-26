@@ -1,12 +1,6 @@
 {
   "threshold": 45.0,
   "last_update_id": 661940651,
-  "history": {
-    "TUSDT": {
-      "time": 1792910785.1294727,
-      "percent": 46.996,
-      "price": "0.00685000"
-    }
-  },
+  "history": {},
   "last_symbols_update": 1792479744.0660434
 }
