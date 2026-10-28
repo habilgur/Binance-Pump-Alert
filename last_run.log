@@ -4,8 +4,8 @@
 [UYARI] Binance Futures isteği başarısız oldu: HTTPSConnectionPool(host='fapi.binance.com', port=443): Max retries exceeded with url: /fapi/v1/ticker/24hr (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 402 Payment Required')))
 [BİLGİ] Binance Global Data verileri alınıyor (https://data-api.binance.vision/api/v3/ticker/24hr)...
 [BİLGİ] Binance Global Data yanıt kodu: 200
-[BİLGİ] Binance Global Data üzerinden 3739 veri başarıyla alındı.
-[BİLGİ] Toplam 365 adet Futures USDT çifti tarandı (Binance Global Data). En çok artan ilk 5: [('HAEDALUSDT', 25.8), ('SHELLUSDT', 16.2), ('INITUSDT', 15.7), ('1000PEPEUSDT', 13.0), ('ANIMEUSDT', 12.4)]
+[BİLGİ] Binance Global Data üzerinden 3740 veri başarıyla alındı.
+[BİLGİ] Toplam 365 adet Futures USDT çifti tarandı (Binance Global Data). En çok artan ilk 5: [('HAEDALUSDT', 26.5), ('INITUSDT', 16.4), ('SHELLUSDT', 15.0), ('SOLVUSDT', 13.9), ('1000PEPEUSDT', 13.0)]
 [BİLGİ] Eşiği (>=45.0%) aşan: 0
 [BİLGİ] Gönderilecek yeni/spam olmayan Futures bildirimi bulunamadı.
 [BİLGİ] Durum (state.json) başarıyla kaydedildi.
