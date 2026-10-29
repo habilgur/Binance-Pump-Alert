@@ -1,12 +1,6 @@
 {
   "threshold": 45.0,
   "last_update_id": 661940651,
-  "history": {
-    "INITUSDT": {
-      "time": 1793192468.77265,
-      "percent": 46.714,
-      "price": "0.24535000"
-    }
-  },
+  "history": {},
   "last_symbols_update": 1792479744.0660434
 }
