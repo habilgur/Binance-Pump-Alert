@@ -5,12 +5,12 @@
 [BİLGİ] Binance Global Data verileri alınıyor (https://data-api.binance.vision/api/v3/ticker/24hr)...
 [BİLGİ] Binance Global Data yanıt kodu: 200
 [BİLGİ] Binance Global Data üzerinden 3745 veri başarıyla alındı.
-[BİLGİ] Toplam 365 adet Futures USDT çifti tarandı (Binance Global Data). En çok artan ilk 5: [('SOPHUSDT', 64.1), ('BEAMXUSDT', 48.6), ('LSKUSDT', 33.8), ('NILUSDT', 23.5), ('CFGUSDT', 20.2)]
+[BİLGİ] Toplam 365 adet Futures USDT çifti tarandı (Binance Global Data). En çok artan ilk 5: [('SOPHUSDT', 62.5), ('BEAMXUSDT', 46.6), ('LSKUSDT', 32.6), ('NILUSDT', 23.8), ('OPUSDT', 20.1)]
 [BİLGİ] Eşiği (>=45.0%) aşan: 2
 [BİLGİ] Fonlama (funding) ve sinyal bilgileri alınıyor...
 [UYARI] fundingInfo alınamadı: HTTPSConnectionPool(host='fapi.binance.com', port=443): Max retries exceeded with url: /fapi/v1/fundingInfo (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 402 Payment Required')))
 [UYARI] premiumIndex alınamadı: HTTPSConnectionPool(host='fapi.binance.com', port=443): Max retries exceeded with url: /fapi/v1/premiumIndex (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 402 Payment Required')))
-[SPAM ENGELİ] SOPHUSDT daha önce %63.3 ile bildirilmişti (Şu an: %64.1). Tekrar bildirilmedi.
-[SPAM ENGELİ] BEAMXUSDT daha önce %45.4 ile bildirilmişti (Şu an: %48.6). Tekrar bildirilmedi.
+[SPAM ENGELİ] SOPHUSDT daha önce %63.3 ile bildirilmişti (Şu an: %62.5). Tekrar bildirilmedi.
+[SPAM ENGELİ] BEAMXUSDT daha önce %45.4 ile bildirilmişti (Şu an: %46.6). Tekrar bildirilmedi.
 [BİLGİ] Gönderilecek yeni/spam olmayan Futures bildirimi bulunamadı.
 [BİLGİ] Durum (state.json) başarıyla kaydedildi.
