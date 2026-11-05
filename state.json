@@ -1,12 +1,6 @@
 {
   "threshold": 45.0,
   "last_update_id": 661940651,
-  "history": {
-    "BMTUSDT": {
-      "time": 1793755596.6333644,
-      "percent": 46.002,
-      "price": "0.03104000"
-    }
-  },
+  "history": {},
   "last_symbols_update": 1792479744.0660434
 }
