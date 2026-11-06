@@ -1,6 +1,12 @@
 {
   "threshold": 45.0,
   "last_update_id": 661940651,
-  "history": {},
+  "history": {
+    "CYBERUSDT": {
+      "time": 1793945443.8378217,
+      "percent": 47.809,
+      "price": "0.37100000"
+    }
+  },
   "last_symbols_update": 1792479744.0660434
 }
