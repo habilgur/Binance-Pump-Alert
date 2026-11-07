@@ -5,11 +5,11 @@
 [BİLGİ] Binance Global Data verileri alınıyor (https://data-api.binance.vision/api/v3/ticker/24hr)...
 [BİLGİ] Binance Global Data yanıt kodu: 200
 [BİLGİ] Binance Global Data üzerinden 3745 veri başarıyla alındı.
-[BİLGİ] Toplam 365 adet Futures USDT çifti tarandı (Binance Global Data). En çok artan ilk 5: [('ONEUSDT', 69.3), ('ACTUSDT', 10.2), ('MANTRAUSDT', 8.5), ('币安人生USDT', 8.4), ('CGPTUSDT', 7.5)]
+[BİLGİ] Toplam 365 adet Futures USDT çifti tarandı (Binance Global Data). En çok artan ilk 5: [('ONEUSDT', 68.0), ('ACTUSDT', 10.8), ('MANTRAUSDT', 8.5), ('币安人生USDT', 8.5), ('CGPTUSDT', 7.9)]
 [BİLGİ] Eşiği (>=45.0%) aşan: 1
 [BİLGİ] Fonlama (funding) ve sinyal bilgileri alınıyor...
 [UYARI] fundingInfo alınamadı: HTTPSConnectionPool(host='fapi.binance.com', port=443): Max retries exceeded with url: /fapi/v1/fundingInfo (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 402 Payment Required')))
 [UYARI] premiumIndex alınamadı: HTTPSConnectionPool(host='fapi.binance.com', port=443): Max retries exceeded with url: /fapi/v1/premiumIndex (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 402 Payment Required')))
-[SPAM ENGELİ] ONEUSDT daha önce %84.0 ile bildirilmişti (Şu an: %69.3). Tekrar bildirilmedi.
+[SPAM ENGELİ] ONEUSDT daha önce %84.0 ile bildirilmişti (Şu an: %68.0). Tekrar bildirilmedi.
 [BİLGİ] Gönderilecek yeni/spam olmayan Futures bildirimi bulunamadı.
 [BİLGİ] Durum (state.json) başarıyla kaydedildi.
