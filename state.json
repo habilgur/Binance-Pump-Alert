@@ -1,12 +1,6 @@
 {
   "threshold": 45.0,
   "last_update_id": 661940652,
-  "history": {
-    "ONEUSDT": {
-      "time": 1794074192.1105304,
-      "percent": 45.274,
-      "price": "0.00233600"
-    }
-  },
+  "history": {},
   "last_symbols_update": 1792479744.0660434
 }
