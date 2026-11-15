@@ -1,15 +1,11 @@
 [BİLGİ] Takip edilen aktif Binance Futures parite sayısı: 568
 [BİLGİ] Aktif Futures alarm eşiği: %45.0
 [BİLGİ] Binance Futures verileri alınıyor (https://fapi.binance.com/fapi/v1/ticker/24hr)...
-[UYARI] Binance Futures isteği başarısız oldu: HTTPSConnectionPool(host='fapi.binance.com', port=443): Max retries exceeded with url: /fapi/v1/ticker/24hr (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 402 Payment Required')))
-[BİLGİ] Binance Global Data verileri alınıyor (https://data-api.binance.vision/api/v3/ticker/24hr)...
-[BİLGİ] Binance Global Data yanıt kodu: 200
-[BİLGİ] Binance Global Data üzerinden 3745 veri başarıyla alındı.
-[BİLGİ] Toplam 365 adet Futures USDT çifti tarandı (Binance Global Data). En çok artan ilk 5: [('BARDUSDT', 71.6), ('SOPHUSDT', 14.5), ('HUMAUSDT', 13.7), ('PROMUSDT', 8.4), ('PLUMEUSDT', 5.6)]
+[BİLGİ] Binance Futures yanıt kodu: 200
+[BİLGİ] Binance Futures üzerinden 806 veri başarıyla alındı.
+[BİLGİ] Toplam 522 adet Futures USDT çifti tarandı (Binance Futures). En çok artan ilk 5: [('EVAAUSDT', 109.1), ('INITUSDT', 31.3), ('JELLYJELLYUSDT', 13.0), ('MEGAUSDT', 10.9), ('VVVUSDT', 8.5)]
 [BİLGİ] Eşiği (>=45.0%) aşan: 1
 [BİLGİ] Fonlama (funding) ve sinyal bilgileri alınıyor...
-[UYARI] fundingInfo alınamadı: HTTPSConnectionPool(host='fapi.binance.com', port=443): Max retries exceeded with url: /fapi/v1/fundingInfo (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 402 Payment Required')))
-[UYARI] premiumIndex alınamadı: HTTPSConnectionPool(host='fapi.binance.com', port=443): Max retries exceeded with url: /fapi/v1/premiumIndex (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 402 Payment Required')))
-[SPAM ENGELİ] BARDUSDT daha önce %58.5 ile bildirilmişti (Şu an: %71.6). Tekrar bildirilmedi.
-[BİLGİ] Gönderilecek yeni/spam olmayan Futures bildirimi bulunamadı.
+[BİLGİ] Telegram bildirimi iletildi.
+[BİLGİ] 1 adet filtrelenmiş Futures bildirimi Telegram'a gönderildi.
 [BİLGİ] Durum (state.json) başarıyla kaydedildi.
