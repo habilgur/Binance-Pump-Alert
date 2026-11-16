@@ -2,7 +2,7 @@ name: Binance Futures Spike Alert
 
 on:
   schedule:
-    # Her 5 dakikada bir çalıştır (UTC)
+    # Her 10 dakikada bir çalıştır (UTC)
     - cron: '*/10 * * * *'
   workflow_dispatch: # GitHub arayüzünden elle tetiklemek için
 
@@ -17,7 +17,7 @@ jobs:
       - name: Code Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Python Kurulumu
         uses: actions/setup-python@v5
@@ -43,5 +43,11 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add state.json last_run.log
-          git diff --staged --quiet || (git commit -m "chore: update alert history and settings [skip ci]" && git pull --rebase origin main && git push)
+          git add state.json futures_symbols.json
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: update alert history and settings [skip ci]"
+            git pull --rebase origin main || git rebase --abort
+            git push origin main || echo "Push atilamadi, bir sonraki turda tekrar denenecek."
+          else
+            echo "State veya sembollerde degisiklik yok, commit atilmadi."
+          fi

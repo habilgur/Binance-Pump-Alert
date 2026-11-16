@@ -2,13 +2,14 @@ import os
 import sys
 import json
 import time
+from datetime import datetime, timezone, timedelta
 import requests
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 STATE_FILE = "state.json"
 FUTURES_SYMBOLS_FILE = "futures_symbols.json"
-PROXY_URL = os.getenv("PROXY_URL") or "http://aytvrfob-DE-ES-GB-PL:04s83ihzhhoq@64.137.10.153:5803/"
+PROXY_URL = os.getenv("PROXY_URL")
 
 def get_proxies() -> dict | None:
     if PROXY_URL:
@@ -18,6 +19,15 @@ def get_proxies() -> dict | None:
 # Anti-Spam Yapılandırması
 COOLDOWN_SECONDS = 4 * 3600   # 4 saat (Aynı koin için 4 saat boyunca tekrar bildirim atılmaz)
 STEP_UP_PERCENT = 15.0        # 4 saat dolmasa bile koin +%15 daha fazla yükselirse "Yeni Zirve" bildirimi atılır
+
+def get_tr_now() -> datetime:
+    """Türkiye saati (UTC+3) döner."""
+    return datetime.now(timezone(timedelta(hours=3)))
+
+def is_sleep_time() -> bool:
+    """Türkiye saatine göre gece 01:00 - 08:00 arası uyku modudur (01:00 dahil, 08:00 hariç)."""
+    current_hour = get_tr_now().hour
+    return 1 <= current_hour < 8
 
 def load_state() -> dict:
     default_state = {
@@ -69,7 +79,7 @@ def load_futures_symbols(state: dict | None = None) -> set:
         if res.status_code == 200:
             api_symbols = [
                 s["symbol"] for s in res.json().get("symbols", [])
-                if s.get("contractType") == "PERPETUAL" and s.get("status") == "TRADING"
+                if "PERPETUAL" in s.get("contractType", "") and s.get("status") == "TRADING" and s.get("quoteAsset") == "USDT"
             ]
             if api_symbols:
                 symbols = set(api_symbols)
@@ -254,7 +264,8 @@ def fetch_tickers():
         try:
             print(f"[BİLGİ] {source_name} verileri alınıyor ({url})...")
             use_proxies = proxies if "fapi.binance.com" in url else None
-            response = requests.get(url, proxies=use_proxies, timeout=15)
+            headers = {"Accept-Encoding": "gzip"}
+            response = requests.get(url, proxies=use_proxies, headers=headers, timeout=15)
             print(f"[BİLGİ] {source_name} yanıt kodu: {response.status_code}")
             if response.status_code != 200:
                 print(f"[UYARI] {source_name} başarısız (HTTP {response.status_code}): {response.text[:200]}")
@@ -439,7 +450,15 @@ def check_binance_spikes():
     active_threshold = state.get("threshold", 50.0)
     print(f"[BİLGİ] Aktif Futures alarm eşiği: %{active_threshold:.1f}")
 
-    # 4. Binance piyasa verilerini çek
+    # 4. Gece Uyku Modu Kontrolü (Türkiye saati 01:00 - 08:00 arası):
+    # Telegram'dan kullanıcı elle /check, /top vb. bir komut vermediyse gece otomatik tarama yapma
+    if is_sleep_time() and not check_limit:
+        tr_now_str = get_tr_now().strftime("%H:%M")
+        print(f"[UYKU MODU] Türkiye saati: {tr_now_str}. Gece 01:00 - 08:00 arası otomatik tarama pasif. Proxy/API harcanmadan çıkılıyor.")
+        save_state(state)
+        return
+
+    # 5. Binance piyasa verilerini çek
     source_name, tickers = fetch_tickers()
 
     raw_candidates = []
