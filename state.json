@@ -1,6 +1,12 @@
 {
   "threshold": 70.0,
   "last_update_id": 661940656,
-  "history": {},
+  "history": {
+    "BREVUSDT": {
+      "time": 1794925868.170505,
+      "percent": 71.03,
+      "price": "0.09800000"
+    }
+  },
   "last_symbols_update": 1792479744.0660434
 }
