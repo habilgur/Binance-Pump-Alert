@@ -1,12 +1,6 @@
 {
   "threshold": 80.0,
-  "last_update_id": 661940652,
-  "history": {
-    "EVAAUSDT": {
-      "time": 1794740563.243212,
-      "percent": 109.126,
-      "price": "2.270900"
-    }
-  },
+  "last_update_id": 661940655,
+  "history": {},
   "last_symbols_update": 1792479744.0660434
 }
