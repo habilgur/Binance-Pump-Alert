@@ -1,12 +1,6 @@
 {
   "threshold": 70.0,
   "last_update_id": 661940656,
-  "history": {
-    "MMTUSDT": {
-      "time": 1795023645.902146,
-      "percent": 70.455,
-      "price": "0.24000000"
-    }
-  },
+  "history": {},
   "last_symbols_update": 1792479744.0660434
 }
